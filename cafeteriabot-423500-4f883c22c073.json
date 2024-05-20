@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "cafeteriabot-423500",
+  "private_key_id": "4f883c22c07353bf4c1d8b289eb8edad2ba4f517",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDJlJMVmKmfqBlB\nJrMj44aR5iUigDdkX2DTEiXqrt6P0N53cBxFlkaYCSzljzBhIzrNo4A/zEby5AFx\nXF5wstxzxeMbvA/vT6X/0sdHmt0pg8r8yp/1t+6vVgfsaFOlkrka+XyoACeeMMYV\n5QdBUfGc9Uq7kXSSdcblOyq6MD/DnXAKXaIZ1rWpkpEHykn/xvLl2z4Hgd5WosS9\n74wasD0PMdLTzDAwcyYMaUzo1uD4W6z/UgEUUytl/F6oW9A0MgepRoEUc/2zFp6/\nWmMFueKqbtPOatjsC0YhD8vYJLVhbNVNiAEGEvSQKlQ8uPU71vk1YVMUwM0pN+tO\nn2BU3vWfAgMBAAECggEAB58GuGRaD/JzF3As5t5ScXivGhmBsvxgtNAGVt9t7Pln\nN85X4Ry697cxdGYKXM4tOKZ6V8Zq4esB5yOcp11/bqt5mECGX7R2Jp8jsBp/kOd5\njoS1ArGomJH9+D43g79DCbMWwwZfkFp8LDMa1oaEuoGqWihDuLIEm40TEW3UvvcY\nl492n40xxXORBZuJizrIOodgMkVjGk/ZlbyM1vFybaUIJtE78D1yQrzs0RcrpGCQ\nFYOPUtS1z/7oJViEhV6kOJViS0F3WGgd+nNwCqVXpVSsUyZSnigQLaM1dj5j7159\nGyYBoUZ2Fwol5qBJlLozXz/787E5/UKTZZ99n6FdyQKBgQDwZVf62gkgCGKpv2WU\ntj+uSH9L5ViM0GG357wYwarqQui+PXU50dbk9ROT96g24l7kTLN6oqyVdbWCU9ML\npErDmNNmTsNWAhmitSZEIdDkHqa7sLnZXd2iIraWQugvOkqLPeq5m6tMR8MXkO3u\nSeaLCmcch1tgOU47LVs5ipQiuQKBgQDWqjvkBI8t+NA4Fo89sR0madzjPYql8X6K\nQa491rrbq+w1angiVGEwVtVHFVrAsZLOfCtoUHtiOtYJRWxm34ks72oWFI03OTG2\nXi/TBuoMjSEetru3PAkPNUdWyTdbwYv5Ax2D+mvuSlxKlztklBBdQvi3tLDDe2Gr\n8Gh66D8PFwKBgDzDEOLZ+5Z6KB4Jv65ABoaR0oMnfCNThG+MhlGnmgDOWq/DLv8n\nV+7VN1aeMYl13FBORstHlOHON8uyTlTR+QfJeB2S6PKzYzFqIjr0ZS1TxgcI22Di\nxeN2bLo8PR262R6qzsqNW1XTia9KNamWSkx4m6ltWR5QPcLdawJ3UYwZAoGBALXu\n4YOHObJExnRC6nPmwEXmQwd1CSVLX2vd7scKTqQPOcqrydWOnjBR58CvIJNf7ISE\nSGXIkEnYg76n0BAANEqZPtgn4ueC2dcuTGoV2hd5JTDavo21nBf/l86+CuUBTJhn\nQ4SvoPn8m+u78OJ1eskQEavgwE9tKoKG5oYEgC1RAoGBANzTwrYjkQdszd5q1b3y\nMCejV26KMNZ+xvLpm470icM1v/iTmapAdUPTl9LFcQ3zvhqH99SK649+mRYOKOak\nyBnesW6F9Jhj9kpsBiDROVjTddhdN86StZ80+Ey9mwOTVxByNUO36s44gHbyKRwl\nXGw3i1fu5+97CMnKIeVEmpep\n-----END PRIVATE KEY-----\n",
+  "client_email": "cafeteriabot@cafeteriabot-423500.iam.gserviceaccount.com",
+  "client_id": "111229763878257824307",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/cafeteriabot%40cafeteriabot-423500.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
