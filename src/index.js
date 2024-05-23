@@ -1,5 +1,7 @@
 require('dotenv').config();
 const express = require('express');
+const { spawn } = require('child_process');
+const XLSX = require('xlsx');
 const multer = require('multer');
 const fs = require('fs');
 const { google } = require('googleapis');
@@ -20,6 +22,7 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const drive = google.drive({ version: 'v3', auth });
+const sheets = google.sheets({ version: 'v4', auth });
 const token = '7010537118:AAGqMOUsovqefCvfeMM05XIZHoXB-8e37rc';
 
 
@@ -50,27 +53,39 @@ bot.on('polling_error', (error) => {
 
 
 async function ensureFolderExists(parentId, folderName) {
-  const query = `name = '${folderName}' and '${parentId}' in parents and mimeType = 'application/vnd.google-apps.folder' and trashed = false`;
-  const response = await drive.files.list({
-    q: query,
-    fields: 'files(id, name)',
-    spaces: 'drive'
-  });
+  if (!folderName || typeof folderName !== 'string' || !parentId || typeof parentId !== 'string') {
+    console.error('Datos inválidos para folderName o parentId:', {folderName, parentId});
+    return null;  // Retorna null para evitar crear carpetas incorrectas.
+  }
 
-  if (response.data.files.length > 0) {
-    return response.data.files[0].id; // Folder exists, return the ID
-  } else {
-    // Folder doesn't exist, create it
-    const fileMetadata = {
-      'name': folderName,
-      'mimeType': 'application/vnd.google-apps.folder',
-      'parents': [parentId]
-    };
-    const folder = await drive.files.create({
-      resource: fileMetadata,
-      fields: 'id'
+  const query = `name='${folderName}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  try {
+    const response = await drive.files.list({
+      q: query,
+      fields: 'files(id, name)',
+      spaces: 'drive'
     });
-    return folder.data.id; // Return the new folder ID
+
+    if (response.data.files.length > 0) {
+      console.log(`Carpeta '${folderName}' encontrada con ID: ${response.data.files[0].id}`);
+      return response.data.files[0].id;
+    } else {
+      console.log(`Carpeta '${folderName}' no encontrada, se procederá a crearla.`);
+      const fileMetadata = {
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder',
+        parents: [parentId]
+      };
+      const folder = await drive.files.create({
+        resource: fileMetadata,
+        fields: 'id'
+      });
+      console.log(`Carpeta '${folderName}' creada con ID: ${folder.data.id}`);
+      return folder.data.id;
+    }
+  } catch (error) {
+    console.error('Error al verificar o crear la carpeta:', error);
+    return null;  // Retorna null para manejo de error en llamadas.
   }
 }
 
@@ -123,7 +138,10 @@ bot.on('document', async (msg) => {
     method: 'get',
     url: await bot.getFileLink(fileId),
     responseType: 'stream'
-  });
+}).catch(error => {
+    console.error("Error during HTTP request:", error.message);
+    throw error;  // Propagate error
+});
 
   const now = new Date();
   const year = dateFormat(now, "yyyy");
@@ -155,6 +173,109 @@ bot.on('document', async (msg) => {
   bot.sendMessage(chatId, `Archivo subido con éxito a la carpeta`); //: ${file.data.id}
   console.log(`Archivo subido con éxito: ${dayOfWeek}`);
 });
+
+
+async function getFileLink(fileId) {
+  try {
+      const response = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/getFile?file_id=${fileId}`);
+      return `https://api.telegram.org/file/bot${process.env.TELEGRAM_TOKEN}/${response.data.result.file_path}`;
+  } catch (error) {
+      console.error("Error fetching file link:", error);
+      throw error; // Ensure the error is not unhandled
+  }
+}
+
+
+function obtenerEmpleados() {
+  return new Promise((resolve, reject) => {
+    const pythonProcess = spawn('python3', ['./src/archivo.py', 'listar', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'hola']);
+
+    let dataString = '';
+    pythonProcess.stdout.on('data', (data) => {
+      dataString += data.toString();
+    });
+
+    pythonProcess.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Python script exited with code ${code}`));
+      } else {
+        try {
+          resolve(JSON.parse(dataString));
+        } catch (e) {
+          reject(new Error("Failed to parse python script output: " + e.message));
+        }
+      }
+    });
+
+    pythonProcess.on('error', (err) => {
+      reject(new Error("Failed to start python script: " + err.message));
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      console.error(`Python Error: ${data}`);
+    });
+  });
+}
+
+// Función para ejecutar el script de Python y registrar la asistencia
+function registrarAsistencia(empleado, fecha, hora) {
+  return new Promise((resolve, reject) => {
+      const pythonProcess = spawn('python3', ['./src/archivo.py', 'asistencia', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'hola', empleado, fecha, hora]);
+
+      pythonProcess.stdout.on('data', (data) => {
+          console.log(data.toString());  // Puedes decidir qué hacer con la salida aquí
+      });
+
+      pythonProcess.stdout.on('end', () => {
+          resolve();
+      });
+
+      pythonProcess.stderr.on('data', (data) => {
+          reject(data.toString());
+      });
+  });
+}
+
+// Manejador para comenzar el flujo de asistencia
+bot.onText(/\/asistencia/, async (msg) => {
+  const chatId = msg.chat.id;
+  try {
+    const employees = await obtenerEmpleados();
+    if (employees.length === 0) {
+      bot.sendMessage(chatId, "No se encontraron empleados.");
+      return;
+    }
+    const keyboard = employees.map(name => [{ text: name }]);
+    const replyMarkup = {
+      keyboard: keyboard,
+      one_time_keyboard: true
+    };
+    bot.sendMessage(chatId, "Seleccione un empleado:", { reply_markup: replyMarkup });
+  } catch (error) {
+    console.error('Error during /asistencia command:', error);
+    bot.sendMessage(chatId, "Error al obtener la lista de empleados. Por favor, intente nuevamente.");
+  }
+});
+
+// Manejador para registrar la asistencia
+bot.on('message', async (msg) => {
+  if (msg.text && !msg.text.startsWith('/')) {
+      const chatId = msg.chat.id;
+      const selectedEmployee = msg.text.trim();
+      const now = new Date();
+      const fecha = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+      const hora = now.toTimeString().split(' ')[0]; // Formato HH:MM:SS
+
+      try {
+          await registrarAsistencia(selectedEmployee, fecha, hora);
+          bot.sendMessage(chatId, `Asistencia registrada para ${selectedEmployee}`);
+      } catch (error) {
+          console.error('Error registrando asistencia:', error);
+          bot.sendMessage(chatId, "Error al registrar la asistencia.");
+      }
+  }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
