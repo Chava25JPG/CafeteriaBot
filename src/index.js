@@ -5,6 +5,7 @@ const XLSX = require('xlsx');
 const multer = require('multer');
 const fs = require('fs');
 const { google } = require('googleapis');
+const moment = require('moment-timezone');
 const TelegramBot = require('node-telegram-bot-api');
 const axios = require('axios');  // Asegúrate de tener Axios instalado
 let dateFormat;
@@ -260,11 +261,13 @@ bot.onText(/\/asistencia/, async (msg) => {
 // Manejador para registrar la asistencia
 bot.on('message', async (msg) => {
   if (msg.text && !msg.text.startsWith('/')) {
-      const chatId = msg.chat.id;
-      const selectedEmployee = msg.text.trim();
-      const now = new Date();
-      const fecha = now.toISOString().split('T')[0]; // Formato YYYY-MM-DD
-      const hora = now.toTimeString().split(' ')[0]; // Formato HH:MM:SS
+    const chatId = msg.chat.id;
+    const selectedEmployee = msg.text.trim();
+
+    // Obtener la fecha y hora actual en la zona horaria de México Central
+    const now = moment().tz("America/Mexico_City");
+    const fecha = now.format('YYYY-MM-DD'); // Formato YYYY-MM-DD
+    const hora = now.format('HH:mm:ss'); // Formato HH:MM:SS
 
       try {
           await registrarAsistencia(selectedEmployee, fecha, hora);
