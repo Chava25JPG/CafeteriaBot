@@ -189,7 +189,7 @@ async function getFileLink(fileId) {
 
 function obtenerEmpleados() {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python3', ['./src/archivo.py', 'listar', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'hola']);
+    const pythonProcess = spawn('python3', ['./src/archivo.py', 'listar', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia']);
 
     let dataString = '';
     pythonProcess.stdout.on('data', (data) => {
@@ -221,7 +221,7 @@ function obtenerEmpleados() {
 // Función para ejecutar el script de Python y registrar la asistencia
 function registrarAsistencia(empleado, fecha, hora) {
   return new Promise((resolve, reject) => {
-      const pythonProcess = spawn('python3', ['./src/archivo.py', 'asistencia', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'hola', empleado, fecha, hora]);
+      const pythonProcess = spawn('python3', ['./src/archivo.py', 'asistencia', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia', empleado, fecha, hora]);
 
       pythonProcess.stdout.on('data', (data) => {
           console.log(data.toString());  // Puedes decidir qué hacer con la salida aquí
