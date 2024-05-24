@@ -83,38 +83,29 @@ def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora):
             print("Archivo no encontrado")
             return
 
-        # Convertir la fecha al formato D/M/YYYY
-        fecha_columna = datetime.strptime(fecha, "%Y-%m-%d").strftime("%-d/%-m/%Y")
-
-        # Obtener datos de empleados y fechas
+        fecha_columna = datetime.strptime(fecha, "%Y-%m-%d").strftime("%-d/%-m/%Y")  # Formato de fecha D/M/YYYY
         empleados = leer_datos(sheet_id, 'A3:A')
         fechas = leer_datos(sheet_id, 'B1:1')
 
         # Determinar la columna de la fecha
-        if not fechas or not fechas[0] or fecha_columna not in fechas[0]:
-            # Agregar la fecha al final si no existe
-            nueva_columna_index = len(fechas[0]) + 1 if fechas and fechas[0] else 1
-            actualizar_datos(sheet_id, f'B1:1', [fechas[0] + [fecha_columna]] if fechas and fechas[0] else [[fecha_columna]], 'USER_ENTERED')
+        if not fechas or fecha_columna not in fechas[0]:
+            nueva_columna_index = len(fechas[0]) + 1 if fechas else 2
+            actualizar_datos(sheet_id, f'R1C{nueva_columna_index}', [[fecha_columna]], 'RAW')
         else:
-            # Usar la columna existente de la fecha
-            nueva_columna_index = fechas[0].index(fecha_columna) + 1
+            nueva_columna_index = fechas[0].index(fecha_columna) + 2
 
         # Encontrar la fila del empleado
-        if empleados:
-            empleado_indices = [idx for idx, val in enumerate(empleados) if val and val[0] == empleado]
-            if empleado_indices:
-                fila_empleado = empleado_indices[0] + 3
-                # Registrar la hora de asistencia
-                actualizar_datos(sheet_id, f'R{fila_empleado}C{nueva_columna_index}', [[hora]])
-                # Opcional: Formatear la celda con color verde
-                sheet_index = obtener_id_hoja(sheet_id)
-                if sheet_index is not None:
-                    formatar_celda(sheet_id, sheet_index, (nueva_columna_index - 1, fila_empleado - 1), (0, 1, 0))
-                print("Asistencia registrada")
-            else:
-                print("Empleado no encontrado")
+        empleado_indices = [idx for idx, val in enumerate(empleados) if val and val[0] == empleado]
+        if empleado_indices:
+            fila_empleado = empleado_indices[0] + 3
+
+            actualizar_datos(sheet_id, f'R{fila_empleado}C{nueva_columna_index}', [[hora]])
+            sheet_index = obtener_id_hoja(sheet_id)  # Obtener el ID de la hoja específica
+            if sheet_index is not None:
+                formatar_celda(sheet_id, sheet_index, (nueva_columna_index - 1, fila_empleado - 1), (0, 1, 0))
+            print("Asistencia registrada")
         else:
-            print("No se encontraron empleados")
+            print("Empleado no encontrado")
     except Exception as e:
         print(f"Error registrando asistencia: {str(e)}")
 
