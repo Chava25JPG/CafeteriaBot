@@ -184,24 +184,25 @@ function obtenerEmpleados() {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python3', ['./src/archivo.py', 'listar', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia']);
     let dataString = '';
+    let errorString = '';
 
     pythonProcess.stdout.on('data', (data) => {
       dataString += data.toString();
     });
 
     pythonProcess.stderr.on('data', (data) => {
-      console.error(`Python Error: ${data.toString()}`);
-      reject(new Error(`Python Error: ${data.toString()}`));
+      errorString += data.toString();
     });
 
     pythonProcess.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error(`Python script exited with code ${code}`));
+        console.error(`Python Error: ${errorString}`);
+        reject(new Error(`Python script exited with code ${code}. Error: ${errorString}`));
       } else {
         try {
           resolve(JSON.parse(dataString.trim()));
         } catch (e) {
-          reject(new Error("Failed to parse python script output: " + e.message));
+          reject(new Error("Failed to parse python script output: " + e.message + ". Output was: " + dataString));
         }
       }
     });
