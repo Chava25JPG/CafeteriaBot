@@ -320,7 +320,7 @@ async function handleAdditionalOptions(chatId) {
         case 'marcar retardo⛔🕐':
           await handleFaltaRetardo(chatId, msg.text);
           break;
-        case 'finalizar registro':
+        case 'finalizar registro✨':
           await bot.sendMessage(chatId, "Registro de asistencia terminado.👌");
           await manageBarSetup(chatId, 'panques🧁', 'barra de panques');
           break;
