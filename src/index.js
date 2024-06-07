@@ -6,7 +6,9 @@ const multer = require('multer');
 const fs = require('fs');
 const { google } = require('googleapis');
 const moment = require('moment-timezone');
-const TelegramBot = require('node-telegram-bot-api');
+const bot = require('./confBot.js')
+const { handleCambioCommand } = require('./cambioTurn.js');
+const { askDesmonte } = require('./Cierre.js')
 const axios = require('axios');  // Asegúrate de tener Axios instalado
 let dateFormat;
 import('dateformat').then((module) => {
@@ -29,15 +31,7 @@ const token = '7010537118:AAGqMOUsovqefCvfeMM05XIZHoXB-8e37rc';
 
 
 
-const bot = new TelegramBot(process.env.TELEGRAM_TOKEN, {
-  polling: {
-    interval: 500, // Intervalo de polling en milisegundos
-    autoStart: true,
-    params: {
-      timeout: 30 // Tiempo de espera de la solicitud en segundos
-    }
-  }
-});
+
 
 bot.on('polling_error', (error) => {
   console.error('Error de polling:', error);
@@ -174,7 +168,7 @@ bot.on('document', async (msg) => {
   bot.sendMessage(chatId, `Archivo subido con éxito a la carpeta`); //: ${file.data.id}
   console.log(`Archivo subido con éxito: ${dayOfWeek}`);
 });
-
+//////////////////////////////////////////////////////////////////////////////////
 
 async function getFileLink(fileId) {
   try {
@@ -244,7 +238,7 @@ function registrarAsistencia(empleado, fecha, hora, rol, motivo) {
   });
 }
 
-bot.onText(/\/asistencia/, handleAsistenciaCommand);
+bot.onText(/\/apertura/, handleAsistenciaCommand);
 
 async function handleAsistenciaCommand(msg) {
   const chatId = msg.chat.id;
@@ -259,7 +253,7 @@ async function handleAsistenciaCommand(msg) {
 }
 
 async function chooseEmployee(chatId, employees) {
-  await bot.sendMessage(chatId, "Seleccione un empleado:", {
+  await bot.sendMessage(chatId, "Seleccione un empleado 👤:", {
     reply_markup: {
       keyboard: employees.map(name => [{ text: name }]),
       one_time_keyboard: true,
@@ -271,8 +265,8 @@ async function chooseEmployee(chatId, employees) {
 }
 
 async function handleRoleSelection(chatId, empleado) {
-  const roles = ['servicio', 'barra', 'cocina', 'runner', 'lava loza'];
-  await bot.sendMessage(chatId, "Seleccione el rol:", {
+  const roles = ['servicio🍴', 'barra', 'cocina 👨‍🍳', 'runner🏃', 'lava loza'];
+  await bot.sendMessage(chatId, "Seleccione el rol :", {
     reply_markup: {
       keyboard: roles.map(rol => [{ text: rol }]),
       one_time_keyboard: true,
@@ -292,16 +286,16 @@ async function handleRoleSelection(chatId, empleado) {
 }
 
 async function askForMore(chatId) {
-  await bot.sendMessage(chatId, "¿Desea registrar a otro empleado?", {
+  await bot.sendMessage(chatId, "¿Desea registrar a otro empleado? 👥", {
     reply_markup: {
-      keyboard: [['Sí', 'No']],
+      keyboard: [['Sí ✅', 'No ⛔']],
       one_time_keyboard: true,
       resize_keyboard: true
     }
   });
 
   bot.once('message', msg => {
-    if (msg.text === 'Sí') {
+    if (msg.text === 'Sí ✅') {
       handleAsistenciaCommand({ chat: { id: chatId } });
     } else {
       handleAdditionalOptions(chatId);
@@ -312,7 +306,7 @@ async function askForMore(chatId) {
 async function handleAdditionalOptions(chatId) {
   await bot.sendMessage(chatId, "Seleccione una opción:", {
     reply_markup: {
-      keyboard: [['Marcar falta', 'Marcar retardo'], ['Finalizar registro']],
+      keyboard: [['Marcar falta⛔', 'Marcar retardo⛔🕐'], ['Finalizar registro✨']],
       one_time_keyboard: true,
       resize_keyboard: true
     }
@@ -321,13 +315,13 @@ async function handleAdditionalOptions(chatId) {
   bot.once('message', async msg => {
     if (msg.text) {
       switch (msg.text.toLowerCase()) {
-        case 'marcar falta':
-        case 'marcar retardo':
+        case 'marcar falta⛔':
+        case 'marcar retardo⛔🕐':
           await handleFaltaRetardo(chatId, msg.text);
           break;
         case 'finalizar registro':
-          await bot.sendMessage(chatId, "Registro de asistencia terminado.");
-          await manageBarSetup(chatId, 'panques', 'barra de panques');
+          await bot.sendMessage(chatId, "Registro de asistencia terminado.👌");
+          await manageBarSetup(chatId, 'panques🧁', 'barra de panques');
           break;
       }
     } else {
@@ -339,14 +333,14 @@ async function handleAdditionalOptions(chatId) {
 async function manageBarSetup(chatId, nextStep, barType) {
   await bot.sendMessage(chatId, `¿Ha montado ya la barra de ${barType}?`,{
     reply_markup: {
-      keyboard: [['Sí', 'No']],
+      keyboard: [['Sí ✅', 'No ⛔']],
       one_time_keyboard: true,
       resize_keyboard: true
     }
   }) ;
   bot.once('message', async msg => {
     
-    if (msg.text && (msg.text.toLowerCase() === 'sí' || msg.text.toLowerCase() === 'si')) {
+    if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si')) {
       await bot.sendMessage(chatId, `Por favor, suba una foto de la barra de ${barType} montada.`);
       bot.once('photo', async (msg) => {
         const tipo = `barra de ${barType}`;
@@ -360,29 +354,31 @@ async function manageBarSetup(chatId, nextStep, barType) {
       });
     } else {
       await bot.sendMessage(chatId, `Por favor monte la barra de ${barType} y luego suba la foto.`);
+      manageBarSetup(chatId,nextStep,barType);
     }
   });
+  
 }
 
 async function manageEquipmentIssues(chatId) {
-  await bot.sendMessage(chatId, "¿Hay algún equipo dañado que necesite reportar?",{
+  await bot.sendMessage(chatId, "¿Hay algún equipo dañado que necesite reportar? ❗❗❗",{
     reply_markup: {
-      keyboard: [['Sí', 'No']],
+      keyboard: [['Sí ✅', 'No ⛔']],
       one_time_keyboard: true,
       resize_keyboard: true
     }
   });
   bot.once('message', async msg => {
-    if (msg.text && (msg.text.toLowerCase() === 'sí' || msg.text.toLowerCase() === 'si')) {
-      await bot.sendMessage(chatId, "Por favor, describa el problema del equipo.");
+    if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si ✅')) {
+      await bot.sendMessage(chatId, "Por favor, describa el problema del equipo. 🚧");
       bot.once('message', async descMsg => {
         if (descMsg.text) {
-          await bot.sendMessage(chatId, "Ahora, por favor suba una foto del equipo dañado.");
+          await bot.sendMessage(chatId, "Ahora, por favor suba una foto del equipo dañado.📸");
           bot.once('photo', async (msg) => {
-            const tipo = 'equipos dañados';
+            const tipo = 'equipo dañados';
             const descripcion = descMsg.text;
             await handlePhotoUpload(chatId, msg, tipo, descripcion);
-            await bot.sendMessage(chatId, "Reporte de equipo dañado completado.");
+            await bot.sendMessage(chatId, "Reporte de equipo dañado completado. 👌");
             await askPlaylistInfo(chatId);
           });
         } else {
@@ -397,20 +393,21 @@ async function manageEquipmentIssues(chatId) {
 }
 
 
+
 async function askSpeakersVolume(chatId) {
-  await bot.sendMessage(chatId, "¿Las bocinas estan en un buen nivel de volumen?",{
+  await bot.sendMessage(chatId, "¿Las bocinas estan en un buen nivel de volumen?🔊",{
     reply_markup: {
-      keyboard: [['Sí', 'No']],
+      keyboard: [['Sí ✅', 'No ⛔']],
       one_time_keyboard: true,
       resize_keyboard: true
     }
   });
   bot.once('message', async msg => {
-    if (msg.text && (msg.text.toLowerCase() === 'sí' || msg.text.toLowerCase() === 'si')) {
+    if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si')) {
       const tipo = 'bocinas';
       const descripcion = 'Bocinas en buen nivel';
       await registerSpeakersVolume(chatId, tipo, descripcion);
-      await bot.sendMessage(chatId, "Información de las bocinas registrada correctamente.");
+      await bot.sendMessage(chatId, "Información de las bocinas registrada correctamente.👌");
       await askRationalWindow(chatId);
     } else {
       await bot.sendMessage(chatId, "Por favor, asegúrese de que las bocinas estén en un buen nivel de volumen.");
@@ -427,16 +424,16 @@ async function registerSpeakersVolume(chatId, tipo, descripcion) {
 
 
 async function askPlaylistInfo(chatId) {
-  await bot.sendMessage(chatId, "¿Qué playlist se está reproduciendo actualmente?");
+  await bot.sendMessage(chatId, "La playlist de Boicot Cafe se esta reproduciendo?💚🎶💚");
   bot.once('message', async msg => {
     if (msg.text) {
       const playlistName = msg.text;
-      await bot.sendMessage(chatId, "Por favor, suba una foto de la pantalla que muestra la playlist.");
+      await bot.sendMessage(chatId, "Por favor, suba una foto de la pantalla que muestra la playlist.📸💚");
       bot.once('photo', async (msg) => {
         const tipo = 'playlist';
         const descripcion = playlistName;
         await handlePhotoUpload(chatId, msg, tipo, descripcion);
-        await bot.sendMessage(chatId, "Información de la playlist registrada correctamente.");
+        await bot.sendMessage(chatId, "Información de la playlist registrada correctamente.💚👌");
         await askSpeakersVolume(chatId);
       });
     } else {
@@ -453,17 +450,17 @@ async function askRationalWindow(chatId) {
     const tipo = 'ventana rational';
     const descripcion = 'Ventana Rational limpia';
     await handlePhotoUpload(chatId, msg, tipo, descripcion);
-    await bot.sendMessage(chatId, "Foto de la ventana Rational registrada correctamente.");
+    await bot.sendMessage(chatId, "Foto de la ventana Rational registrada correctamente.👌👌");
     await askDigitalPlatforms(chatId);
   });
 }
 async function askDigitalPlatforms(chatId) {
-  await bot.sendMessage(chatId, "Por favor, suba una foto de las plataformas digitales funcionando.");
+  await bot.sendMessage(chatId, "Por favor, suba una foto de las plataformas digitales funcionando.📲📲");
   bot.once('photo', async (msg) => {
     const tipo = 'plataformas digitales';
     const descripcion = 'Plataformas digitales funcionando';
     await handlePhotoUpload(chatId, msg, tipo, descripcion);
-    await bot.sendMessage(chatId, "Foto de las plataformas digitales registrada correctamente.");
+    await bot.sendMessage(chatId, "Foto de las plataformas digitales registrada correctamente👌👌.");
   });
 }
 
@@ -537,6 +534,50 @@ function subirFoto(folder_id,fecha ,file_url, tipo, descripcion) {
   });
 }
 
+async function manageEquipmentIssues2(chatId) {
+  await bot.sendMessage(chatId, "¿Hay algún equipo dañado que necesite reportar? 💥💥💥",{
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+  bot.once('message', async msg => {
+    if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si')) {
+      await bot.sendMessage(chatId, "Por favor, describa el problema del equipo.🔨");
+      bot.once('message', async descMsg => {
+        if (descMsg.text) {
+          await bot.sendMessage(chatId, "Ahora, por favor suba una foto del equipo dañado.📸📸");
+          bot.once('photo', async (msg) => {
+            const tipo = 'equipo dañados';
+            const descripcion = descMsg.text;
+            await handlePhotoUpload(chatId, msg, tipo, descripcion);
+            await bot.sendMessage(chatId, "Reporte de equipo dañado completado. 😀");
+            
+          });
+        } else {
+          await bot.sendMessage(chatId, "Por favor proporcione una descripción del problema.");
+        }
+      });
+    } else {
+      await bot.sendMessage(chatId, "No se reportaron equipos dañados.");
+      await askPlaylistInfo(chatId);
+    }
+  });
+}
+
+bot.onText(/\/reporte_danio/, (msg) => {
+  const chatId = msg.chat.id;  // Extrae el chat_id del mensaje recibido
+  manageEquipmentIssues2(chatId);         // Llama a la función y pasa el chat_id
+});
+
+bot.onText(/\/cambio_de_turno/, handleCambioCommand);
+
+
+bot.onText(/\/cierre/, (msg) => {
+  const chatId = msg.chat.id;  // Extrae el chat_id del mensaje recibido
+  askDesmonte(chatId);         // Llama a la función y pasa el chat_id
+});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
