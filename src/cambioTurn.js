@@ -18,14 +18,14 @@ const bot = require('./confBot.js');
 
 
 async function getFileLink(fileId) {
-    try {
-        const response = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/getFile?file_id=${fileId}`);
-        return `https://api.telegram.org/file/bot${process.env.TELEGRAM_TOKEN}/${response.data.result.file_path}`;
-    } catch (error) {
-        console.error("Error fetching file link:", error);
-        throw error; // Ensure the error is not unhandled
-    }
+  try {
+      const response = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/getFile?file_id=${fileId}`);
+      return `https://api.telegram.org/file/bot${process.env.TELEGRAM_TOKEN}/${response.data.result.file_path}`;
+  } catch (error) {
+      console.error("Error fetching file link:", error);
+      throw error; // Ensure the error is not unhandled
   }
+}
   
   function obtenerEmpleados() {
     return new Promise((resolve, reject) => {
@@ -87,8 +87,8 @@ async function getFileLink(fileId) {
   
   
   
-  async function handleCambioCommand(msg) {
-    const chatId = msg.chat.id;
+  async function handleCambioCommand(chatId) {
+    
     const employees = await obtenerEmpleados();
     if (!employees || employees.length === 0) {
       await bot.sendMessage(chatId, "No se encontraron empleados.");
@@ -143,7 +143,7 @@ async function getFileLink(fileId) {
   
     bot.once('message', msg => {
       if (msg.text === 'Sí ✅') {
-        handleAsistenciaCommand({ chat: { id: chatId } });
+        handleCambioCommand({ chat: { id: chatId } });
       } else {
         handleAdditionalOptions(chatId);
       }

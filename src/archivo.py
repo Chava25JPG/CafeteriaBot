@@ -219,8 +219,9 @@ def obtener_o_crear_archivo_con_fecha(fecha):
         file = drive_service.files().create(body=file_metadata, fields='id').execute()
         print(f"Archivo creado: {file['id']} con nombre {file_name}")
         return file['id']
-    print(f"Archivo encontrado: {files[0]['id']} con nombre {file_name}")
-    return files[0]['id']
+    else:
+        print(f"Archivo encontrado: {files[0]['id']} con nombre {file_name}")
+        return files[0]['id']
 
 def obtener_o_crear_hoja(sheet_id, title):
     """Obtiene o crea una hoja dentro de una hoja de cálculo."""

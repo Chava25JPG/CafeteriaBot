@@ -242,6 +242,7 @@ async function askBasura(chatId) {
         }
     });
 }
+
 async function askAlarma(chatId) {
     await bot.sendMessage(chatId, "Ya ha puesto la Alarma?", {
         reply_markup: {
@@ -386,8 +387,14 @@ async function handlePhotoUpload(chatId, msg, tipo, descripcion = '') {
     }
 }
 
-function getFileLink(file_id) {
-    return bot.getFileLink(file_id);
+async function getFileLink(fileId) {
+    try {
+        const response = await axios.get(`https://api.telegram.org/bot${process.env.TELEGRAM_TOKEN}/getFile?file_id=${fileId}`);
+        return `https://api.telegram.org/file/bot${process.env.TELEGRAM_TOKEN}/${response.data.result.file_path}`;
+    } catch (error) {
+        console.error("Error fetching file link:", error);
+        throw error; // Ensure the error is not unhandled
+    }
 }
 
 function subirFoto(folder_id, fecha, file_url, tipo, descripcion) {

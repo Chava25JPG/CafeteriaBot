@@ -180,6 +180,7 @@ async function getFileLink(fileId) {
   }
 }
 
+
 function obtenerEmpleados() {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python3', ['./src/archivo.py', 'listar', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia']);
@@ -239,10 +240,10 @@ function registrarAsistencia(empleado, fecha, hora, rol, motivo) {
   });
 }
 
-bot.onText(/\/apertura/, handleAsistenciaCommand);
 
-async function handleAsistenciaCommand(msg) {
-  const chatId = msg.chat.id;
+
+async function handleAsistenciaCommand(chatId) {
+  
   const employees = await obtenerEmpleados();
   if (!employees || employees.length === 0) {
     await bot.sendMessage(chatId, "No se encontraron empleados.");
@@ -554,6 +555,7 @@ async function manageEquipmentIssues2(chatId) {
             const descripcion = descMsg.text;
             await handlePhotoUpload(chatId, msg, tipo, descripcion);
             await bot.sendMessage(chatId, "Reporte de equipo dañado completado. 😀");
+            callback(chatId);
             
           });
         } else {
@@ -562,7 +564,7 @@ async function manageEquipmentIssues2(chatId) {
       });
     } else {
       await bot.sendMessage(chatId, "No se reportaron equipos dañados.");
-      await askPlaylistInfo(chatId);
+      callback(chatId);
     }
   });
 }
@@ -579,6 +581,59 @@ bot.onText(/\/cierre/, (msg) => {
   const chatId = msg.chat.id;  // Extrae el chat_id del mensaje recibido
   askDesmonte(chatId);         // Llama a la función y pasa el chat_id
 });
+
+
+bot.onText(/\/apertura_turno/, (msg) => {
+  const chatId = msg.chat.id;
+  bot.sendMessage(chatId, "Seleccione su turno:", {
+    reply_markup: {
+      keyboard: [
+        ['Turno Matutino', 'Turno Vespertino'],
+        ['Cierre']
+      ],
+      one_time_keyboard: true
+    }
+  });
+});
+
+
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  if (msg.text === 'Turno Matutino') {
+    handleShiftStart(chatId, handleAsistenciaCommand);
+  } else if (msg.text === 'Cierre') {
+    handleShiftStart(chatId, askDesmonte); 
+  } else if (msg.text === 'Turno Vespertino'){
+    handleShiftStart(chatId, handleCambioCommand);
+  }
+});
+
+
+async function handleShiftStart(chatId, callback) {
+  bot.sendMessage(chatId, "¿Te entregaron algún equipo dañado?", {
+    reply_markup: {
+      keyboard: [['Sí', 'No']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  bot.once('message', msg => {
+    if (msg.text === 'Sí') {
+      manageEquipmentIssues2(chatId, callback); // Asegúrate de que manageEquipmentIssues2 también acepte y ejecute el callback
+    } else {
+      callback(chatId); // Ejecuta el callback si la respuesta es 'No'
+    }
+  });
+}
+
+
+bot.onText(/\/marcarRetardoFalta/, (msg) => {
+  const chatId = msg.chat.id;  // Extrae el chat_id del mensaje recibido
+  handleAdditionalOptions(chatId);         // Llama a la función y pasa el chat_id
+});
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
