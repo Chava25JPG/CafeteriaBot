@@ -144,7 +144,7 @@ async function getFileLink(fileId) {
     bot.once('message', msg => {
       if (msg.text === 'Sí ✅') {
         const chatId = msg.chat.id;
-        handleCambioCommand({ chat: { id: chatId } });
+        handleCambioCommand(chatId);
       } else {
         handleAdditionalOptions(chatId);
       }
