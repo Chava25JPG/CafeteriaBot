@@ -133,7 +133,7 @@ async function askForLimpiezaFood(chatId) {
 }
 
 async function askForMontadaBebidas(chatId) {
-    await bot.sendMessage(chatId, "¿Ha realizado la montada de la barra de Bebidas🍹?", {
+    await bot.sendMessage(chatId, "¿Ha realizado la desmontada de la barra de Bebidas🍹?", {
         reply_markup: {
             keyboard: [['Sí ✅', 'No ⛔']],
             one_time_keyboard: true,

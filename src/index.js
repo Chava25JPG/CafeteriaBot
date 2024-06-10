@@ -588,8 +588,8 @@ bot.onText(/\/apertura_turno/, (msg) => {
   bot.sendMessage(chatId, "Seleccione su turno:", {
     reply_markup: {
       keyboard: [
-        ['Turno Matutino', 'Turno Vespertino'],
-        ['Cierre']
+        ['🌞Turno Matutino🌞', '🌕Turno Vespertino🌕'],
+        ['🚪Cierre🚪']
       ],
       one_time_keyboard: true
     }
