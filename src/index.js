@@ -599,11 +599,11 @@ bot.onText(/\/apertura_turno/, (msg) => {
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
-  if (msg.text === 'Turno Matutino') {
+  if (msg.text === '🌞Turno Matutino🌞') {
     handleShiftStart(chatId, handleAsistenciaCommand);
-  } else if (msg.text === 'Cierre') {
+  } else if (msg.text === '🚪Cierre🚪') {
     handleShiftStart(chatId, askDesmonte); 
-  } else if (msg.text === 'Turno Vespertino'){
+  } else if (msg.text === '🌕Turno Vespertino🌕'){
     handleShiftStart(chatId, handleCambioCommand);
   }
 });
