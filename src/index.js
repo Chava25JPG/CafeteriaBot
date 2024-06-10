@@ -255,7 +255,7 @@ async function handleAsistenciaCommand(chatId) {
 }
 
 async function chooseEmployee(chatId, employees) {
-  await bot.sendMessage(chatId, "Seleccione un empleado 👤:", {
+  await bot.sendMessage(chatId, "Quien en turno? 👤:", {
     reply_markup: {
       keyboard: employees.map(name => [{ text: name }]),
       one_time_keyboard: true,

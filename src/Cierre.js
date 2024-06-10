@@ -109,15 +109,21 @@ async function askForLimpiezaFood(chatId) {
             resize_keyboard: true
         }
     });
+
     bot.once('message', async msg => {
         if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si')) {
-            await bot.sendMessage(chatId, "Por favor, suba una foto de la limpieza de food🧽📸");
-            bot.once('photo', async msg => {
-                const tipo = 'limpieza de food';
-                await handlePhotoUpload(chatId, msg, tipo);
-                await bot.sendMessage(chatId, "Registrado👌👌");
-                await askForMontadaBebidas(chatId);
-                ;
+            await bot.sendMessage(chatId, "Por favor, suba las fotos de la limpieza de food🧽📸. Puede enviar hasta 5 fotos.");
+            bot.once('message', async msg => {
+                if (msg.photo) {
+                    const photos = msg.photo;
+                    for (let photo of photos) {
+                        await handlePhotoUpload(chatId, photo, 'limpieza de food');
+                    }
+                    await bot.sendMessage(chatId, "Todas las fotos han sido registradas👌👌");
+                    await askForMontadaBebidas(chatId);
+                } else {
+                    await bot.sendMessage(chatId, "Por favor, asegúrese de enviar fotos.");
+                }
             });
         } else {
             await bot.sendMessage(chatId, "Por favor realice la limpieza de food y suba la foto.");
