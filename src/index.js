@@ -288,26 +288,38 @@ async function handleRoleSelection(chatId, empleado) {
 }
 
 async function askForMore(chatId) {
-  
   await bot.sendMessage(chatId, "¿Desea registrar a otro empleado? 👥", {
-    reply_markup: {
-      keyboard: [['Sí ✅', 'No ⛔']],
-      one_time_keyboard: true,
-      resize_keyboard: true
-    }
+      reply_markup: {
+          keyboard: [['Sí ✅', 'No ⛔']],
+          one_time_keyboard: true,  // Asegura que el teclado desaparezca después de la selección
+          resize_keyboard: true
+      }
   });
 
-  bot.once('message', msg => {
-    if (msg.text === 'Sí ✅') {
-      
-      handleAsistenciaCommand(chatId);
-    }else if (msg.text === 'Si'){
-      handleAsistenciaCommand(chatId);
-    }else {
-      handleAdditionalOptions(chatId);
-    }
-  });
+  // Escuchar sólo por una respuesta válida
+  function listenForValidResponse() {
+      bot.once('message', msg => {
+          if (msg.text === 'Sí ✅' || msg.text === 'Si') {
+              handleAsistenciaCommand(chatId);
+          } else if (msg.text === 'No ⛔' || msg.text === 'No') {
+              handleAdditionalOptions(chatId);
+          } else {
+              // Si la respuesta no es válida, pide de nuevo
+              bot.sendMessage(chatId, "Por favor, seleccione una opción válida del teclado.", {
+                  reply_markup: {
+                      keyboard: [['Sí ✅', 'No ⛔']],
+                      one_time_keyboard: true,
+                      resize_keyboard: true
+                  }
+              });
+              listenForValidResponse(); // Vuelve a escuchar hasta obtener una respuesta válida
+          }
+      });
+  }
+
+  listenForValidResponse(); // Iniciar la escucha de respuestas válidas
 }
+
 
 async function handleAdditionalOptions(chatId) {
   await bot.sendMessage(chatId, "Seleccione una opción:", {
