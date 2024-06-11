@@ -298,7 +298,8 @@ async function askForMore(chatId) {
 
   bot.once('message', msg => {
     if (msg.text === 'Sí ✅') {
-      handleAsistenciaCommand({ chat: { id: chatId } });
+      
+      handleAsistenciaCommand(chatId);
     } else {
       handleAdditionalOptions(chatId);
     }
@@ -639,3 +640,8 @@ bot.onText(/\/marcarRetardoFalta/, (msg) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
+
+
+
+
+
