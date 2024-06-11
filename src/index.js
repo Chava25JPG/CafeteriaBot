@@ -300,7 +300,9 @@ async function askForMore(chatId) {
     if (msg.text === 'Sí ✅') {
       
       handleAsistenciaCommand(chatId);
-    } else {
+    }else if (msg.text === 'Si'){
+      handleAsistenciaCommand(chatId);
+    }else {
       handleAdditionalOptions(chatId);
     }
   });
