@@ -589,7 +589,7 @@ bot.onText(/\/apertura_turno/, (msg) => {
     reply_markup: {
       keyboard: [
         ['🌞Turno Matutino🌞', '🌕Turno Vespertino🌕'],
-        ['🚪Cierre🚪']
+        ['🚪Cierre🚪', '❕Mas opciones❕']
       ],
       one_time_keyboard: true
     }
@@ -605,6 +605,8 @@ bot.on('message', async (msg) => {
     handleShiftStart(chatId, askDesmonte); 
   } else if (msg.text === '🌕Turno Vespertino🌕'){
     handleShiftStart(chatId, handleCambioCommand);
+  }else if (msg.text === '❕Mas opciones❕'){
+    handleAdditionalOptions(chatId); 
   }
 });
 

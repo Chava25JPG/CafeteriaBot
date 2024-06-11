@@ -4,6 +4,10 @@ const { spawn } = require('child_process');
 const axios = require('axios');
 
 async function askDesmonte(chatId) {
+    await askForRefillFood(chatId);
+}
+
+async function askDesmonte1(chatId) {
     await bot.sendMessage(chatId, "Se ha cerrado la sucursal?🏡", {
         reply_markup: {
             keyboard: [['Sí ✅', 'No ⛔']],
@@ -359,6 +363,7 @@ async function askRational(chatId) {
             await registerClosure(chatId, tipo, descripcion);
             await bot.sendMessage(chatId, "Registrado👌👌");
             // Llamar a la función que maneja el siguiente paso
+            await askDesmonte1(chatId);
             
             
         } else {
