@@ -353,16 +353,14 @@ async function handleAdditionalOptions(chatId) {
 const taskCompletion = {};
 
 function initializeTaskCompletion(chatId) {
-    if (!taskCompletion[chatId]) {
-        taskCompletion[chatId] = {
-            'Barra de Food': false,
-            'Barra de Panques': false,
-            'Barra de Bebidas': false,
-            'Rational': false,
-            'Playlist': false,
-            'Volumen de Bocinas': false
-        };
-    }
+    taskCompletion[chatId] = {
+        'Barra de Food': false,
+        'Barra de Panques': false,
+        'Barra de Bebidas': false,
+        'Rational': false,
+        'Playlist': false,
+        'Volumen de Bocinas': false
+    };
 }
 
 async function showTaskMenu(chatId) {
@@ -384,11 +382,11 @@ async function showTaskMenu(chatId) {
         const text = msg.text;
         if (text === 'Terminar') {
             await bot.sendMessage(chatId, "Registro completo.");
-            bot.removeListener('message', handler);
+            delete taskCompletion[chatId]; // Limpia el estado al terminar
             return;
         }
         if (taskCompletion[chatId][text] === false) {
-            taskCompletion[chatId][text] = true;
+            taskCompletion[chatId][text] = true;  // Marca como completada
             await handleTask(text, chatId);
             await showTaskMenu(chatId);
         } else {
@@ -397,8 +395,14 @@ async function showTaskMenu(chatId) {
         }
     };
 
+    // Remover el listener anterior y añadir el nuevo
+    bot.removeListener('message', previousHandler);
     bot.on('message', handler);
+    previousHandler = handler;  // Actualiza el handler anterior con el actual
 }
+
+let previousHandler = null; // Referencia al handler anterior para poder removerlo
+
 
 async function handleTask(task, chatId) {
   switch (task) {
