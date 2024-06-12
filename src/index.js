@@ -407,7 +407,7 @@ let previousHandler = null; // Referencia al handler anterior para poder remover
 async function handleTask(task, chatId) {
   switch (task) {
     case 'Barra de Food':
-      await manageBarSetup(chatId, 'food', 'Barra de Food');
+      manageBarSetup(chatId, 'food', 'Barra de Food');
       break;
     case 'Barra de Panques':
       await manageBarSetup(chatId, 'panques', 'Barra de Panques');
