@@ -349,6 +349,7 @@ async function handleAdditionalOptions(chatId) {
       }
   });
 }
+
 const taskCompletion = {};
 
 function initializeTaskCompletion(chatId) {
@@ -358,38 +359,41 @@ function initializeTaskCompletion(chatId) {
         'Barra de Bebidas': false,
         'Rational': false,
         'Playlist': false,
-        'Volumen de Bocinas': false
+        'Volumen de Bocinas': false,
+        'Plataformas Digitales': false
     };
 }
 
 async function showTaskMenu(chatId) {
-    const options = Object.entries(taskCompletion[chatId]).filter(([task, done]) => !done).map(([task]) => [task]);
-    options.push(['Terminar']); // Opción para terminar y cerrar el menú
+  initializeTaskCompletion(chatId); // Asegura que taskCompletion[chatId] esté inicializado
 
-    await bot.sendMessage(chatId, "Seleccione la tarea a registrar:", {
-        reply_markup: {
-            keyboard: options,
-            one_time_keyboard: true,
-            resize_keyboard: true
-        }
-    });
+  const options = Object.entries(taskCompletion[chatId]).filter(([task, done]) => !done).map(([task]) => [task]);
+  options.push(['Terminar']); // Opción para terminar y cerrar el menú
 
-    // Manejar la respuesta del usuario
-    bot.once('message', async (msg) => {
-        const text = msg.text;
-        if (text === 'Terminar') {
-            await bot.sendMessage(chatId, "Registro completo.");
-            delete taskCompletion[chatId]; // Limpia el estado al terminar
-            return;
-        }
-        if (taskCompletion[chatId][text] === false) {
-            taskCompletion[chatId][text] = true;  // Marca como completada
-            await handleTask(text, chatId);
-        } else {
-            await bot.sendMessage(chatId, "Seleccione una opción válida.");
-            await showTaskMenu(chatId);
-        }
-    });
+  await bot.sendMessage(chatId, "Seleccione la tarea a registrar:", {
+      reply_markup: {
+          keyboard: options,
+          one_time_keyboard: true,
+          resize_keyboard: true
+      }
+  });
+
+  // Manejar la respuesta del usuario
+  bot.once('message', async (msg) => {
+      const text = msg.text;
+      if (text === 'Terminar') {
+          await bot.sendMessage(chatId, "Registro completo.");
+          delete taskCompletion[chatId]; // Limpia el estado al terminar
+          return;
+      }
+      if (taskCompletion[chatId][text] === false) {
+          taskCompletion[chatId][text] = true;  // Marca como completada
+          await handleTask(text, chatId);
+      } else {
+          await bot.sendMessage(chatId, "Seleccione una opción válida.");
+          await showTaskMenu(chatId);
+      }
+  });
 }
 
 async function handleTask(task, chatId) {
@@ -412,6 +416,9 @@ async function handleTask(task, chatId) {
     case 'Volumen de Bocinas':
       await askSpeakersVolume(chatId);
       break;
+      case 'Plataformas Digitales':
+        await askDigitalPlatforms(chatId);
+        break;
     default:
       await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
       break;
