@@ -350,51 +350,95 @@ async function handleAdditionalOptions(chatId) {
   });
 }
 
-// Función para mostrar el menú de tareas post-registro
+const taskCompletion = {};
+
+function initializeTaskCompletion(chatId) {
+    if (!taskCompletion[chatId]) {
+        taskCompletion[chatId] = {
+            'Barra de Food': false,
+            'Barra de Panques': false,
+            'Barra de Bebidas': false,
+            'Rational': false,
+            'Playlist': false,
+            'Volumen de Bocinas': false
+        };
+    }
+}
+
 async function showTaskMenu(chatId) {
+  initializeTaskCompletion(chatId);
+
+  const options = Object.entries(taskCompletion[chatId]).reduce((acc, [key, completed]) => {
+      if (!completed) {
+          acc.push([key]);
+      }
+      return acc;
+  }, []);
+
+  options.push(['Terminar']);  // Opción para terminar y cerrar el menú
+
   await bot.sendMessage(chatId, "Seleccione la tarea a registrar:", {
       reply_markup: {
-          keyboard: [
-              ['Barra de Food', 'Barra de Panques'],
-              ['Barra de Bebidas', 'Rational'],
-              ['Playlist', 'Volumen de Bocinas'],
-              ['Terminar']
-          ],
+          keyboard: options,
           one_time_keyboard: true,
           resize_keyboard: true
       }
   });
 
   bot.once('message', async msg => {
-      switch (msg.text) {
-          case 'Barra de Food':
-              await manageBarSetup(chatId, 'food', 'Barra de Food');
-              break;
-          case 'Barra de Panques':
-              await manageBarSetup(chatId, 'panques', 'Barra de Panques');
-              break;
-          case 'Barra de Bebidas':
-              await manageBarSetup(chatId, 'bebidas', 'Barra de Bebidas');
-              break;
-          case 'Rational':
-              await askRationalWindow(chatId);
-              break;
-          case 'Playlist':
-              await askPlaylistInfo(chatId);
-              break;
-          case 'Volumen de Bocinas':
-              await askSpeakersVolume(chatId);
-              break;
-          case 'Terminar':
-              await bot.sendMessage(chatId, "Registro completo.");
-              break;
-          default:
-              await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
-              await showTaskMenu(chatId);
-              break;
+      if (msg.text === 'Terminar') {
+          await bot.sendMessage(chatId, "Registro completo.");
+          delete taskCompletion[chatId]; // Limpia el estado al terminar
+          return;
+      }
+      
+      if (taskCompletion[chatId][msg.text] === false) {
+          taskCompletion[chatId][msg.text] = true;  // Marca como completada
+          // Llama a la función correspondiente
+          await handleTask(msg.text, chatId);
+          // Vuelve al menú, que ahora estará actualizado
+          await showTaskMenu(chatId);
+      } else {
+          await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
+          await showTaskMenu(chatId);
       }
   });
 }
+
+async function handleTask(task, chatId) {
+  switch (task) {
+    case 'Barra de Food':
+        await manageBarSetup(chatId, 'food', 'Barra de Food');
+        break;
+    case 'Barra de Panques':
+        await manageBarSetup(chatId, 'panques', 'Barra de Panques');
+        break;
+    case 'Barra de Bebidas':
+        await manageBarSetup(chatId, 'bebidas', 'Barra de Bebidas');
+        break;
+    case 'Rational':
+        await askRationalWindow(chatId);
+        break;
+    case 'Playlist':
+        await askPlaylistInfo(chatId);
+        break;
+    case 'Volumen de Bocinas':
+        await askSpeakersVolume(chatId);
+        break;
+    case 'Terminar':
+        await bot.sendMessage(chatId, "Registro completo.");
+        break;
+    default:
+        await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
+        await showTaskMenu(chatId);
+        break;
+}
+}
+
+
+
+// Función para mostrar el menú de tareas post-registro
+
 
 async function manageBarSetup(chatId, nextStep, barType) {
   await bot.sendMessage(chatId, `¿Ha montado ya la barra de ${barType}?`,{
