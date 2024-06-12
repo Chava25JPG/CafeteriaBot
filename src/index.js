@@ -466,19 +466,24 @@ async function askSpeakersVolume(chatId) {
     }
   });
 
-  bot.once('message', async (msg) => {
-    if (msg.text === 'Sí ✅') {
-      const tipo = 'bocinas';
-      const descripcion = 'Bocinas en buen nivel';
-      await registerSpeakersVolume(chatId, tipo, descripcion);
-      await bot.sendMessage(chatId, "Información de las bocinas registrada correctamente.👌");
-    } else if (msg.text === 'No ⛔') {
-      await bot.sendMessage(chatId, "Por favor, asegúrese de que las bocinas estén en un buen nivel de volumen.");
-      await askSpeakersVolume(chatId);
-    } else {
-      await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
-      await askSpeakersVolume(chatId);
-    }
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      if (msg.text === 'Sí ✅') {
+        const tipo = 'bocinas';
+        const descripcion = 'Bocinas en buen nivel';
+        await registerSpeakersVolume(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, "Información de las bocinas registrada correctamente.👌");
+        resolve();
+      } else if (msg.text === 'No ⛔') {
+        await bot.sendMessage(chatId, "Por favor, asegúrese de que las bocinas estén en un buen nivel de volumen.");
+        await askSpeakersVolume(chatId);
+        resolve();
+      } else {
+        await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
+        await askSpeakersVolume(chatId);
+        resolve();
+      }
+    });
   });
 }
 
@@ -491,40 +496,52 @@ async function registerSpeakersVolume(chatId, tipo, descripcion) {
 
 async function askPlaylistInfo(chatId) {
   await bot.sendMessage(chatId, "La playlist de Boicot Cafe se esta reproduciendo?💚🎶💚");
-  bot.once('message', async (msg) => {
-    if (msg.text) {
-      const playlistName = msg.text;
-      await bot.sendMessage(chatId, "Por favor, suba una foto de la pantalla que muestra la playlist.📸💚");
-      bot.once('photo', async (msg) => {
-        const tipo = 'playlist';
-        const descripcion = playlistName;
-        await handlePhotoUpload(chatId, msg, tipo, descripcion);
-        await bot.sendMessage(chatId, "Información de la playlist registrada correctamente.💚👌");
-      });
-    } else {
-      await bot.sendMessage(chatId, "Por favor, envíe el nombre de la playlist como un mensaje de texto.");
-      await askPlaylistInfo(chatId);
-    }
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      if (msg.text) {
+        const playlistName = msg.text;
+        await bot.sendMessage(chatId, "Por favor, suba una foto de la pantalla que muestra la playlist.📸💚");
+
+        bot.once('photo', async (msg) => {
+          const tipo = 'playlist';
+          const descripcion = playlistName;
+          await handlePhotoUpload(chatId, msg, tipo, descripcion);
+          await bot.sendMessage(chatId, "Información de la playlist registrada correctamente.💚👌");
+          resolve();
+        });
+      } else {
+        await bot.sendMessage(chatId, "Por favor, envíe el nombre de la playlist como un mensaje de texto.");
+        await askPlaylistInfo(chatId);
+        resolve();
+      }
+    });
   });
 }
-
 async function askRationalWindow(chatId) {
   await bot.sendMessage(chatId, "Por favor, suba una foto de la ventana Rational limpia.");
-  bot.once('photo', async (msg) => {
-    const tipo = 'ventana rational';
-    const descripcion = 'Ventana Rational limpia';
-    await handlePhotoUpload(chatId, msg, tipo, descripcion);
-    await bot.sendMessage(chatId, "Foto de la ventana Rational registrada correctamente.👌👌");
+
+  return new Promise((resolve) => {
+    bot.once('photo', async (msg) => {
+      const tipo = 'ventana rational';
+      const descripcion = 'Ventana Rational limpia';
+      await handlePhotoUpload(chatId, msg, tipo, descripcion);
+      await bot.sendMessage(chatId, "Foto de la ventana Rational registrada correctamente.👌👌");
+      resolve();
+    });
   });
 }
-
 async function askDigitalPlatforms(chatId) {
   await bot.sendMessage(chatId, "Por favor, suba una foto de las plataformas digitales funcionando.📲📲");
-  bot.once('photo', async (msg) => {
-    const tipo = 'plataformas digitales';
-    const descripcion = 'Plataformas digitales funcionando';
-    await handlePhotoUpload(chatId, msg, tipo, descripcion);
-    await bot.sendMessage(chatId, "Foto de las plataformas digitales registrada correctamente👌👌.");
+
+  return new Promise((resolve) => {
+    bot.once('photo', async (msg) => {
+      const tipo = 'plataformas digitales';
+      const descripcion = 'Plataformas digitales funcionando';
+      await handlePhotoUpload(chatId, msg, tipo, descripcion);
+      await bot.sendMessage(chatId, "Foto de las plataformas digitales registrada correctamente👌👌.");
+      resolve();
+    });
   });
 }
 
@@ -662,7 +679,7 @@ bot.onText(/\/apertura_turno/, (msg) => {
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   if (msg.text === '🌞Turno Matutino🌞') {
-    handleShiftStart(chatId, handleAsistenciaCommand);
+    handleAsistenciaCommand(chatId);
   } else if (msg.text === '🚪Cierre🚪') {
     handleShiftStart(chatId, askDesmonte); 
   } else if (msg.text === '🌕Turno Vespertino🌕'){
