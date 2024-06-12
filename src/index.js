@@ -435,20 +435,25 @@ async function manageBarSetup(chatId, barType, displayName) {
     }
   });
 
-  bot.once('message', async (msg) => {
-    if (msg.text === 'Sí ✅') {
-      await bot.sendMessage(chatId, `Por favor, suba una foto de la ${displayName}.`);
-      bot.once('photo', async (msg) => {
-        const tipo = `barra de ${barType}`;
-        await handlePhotoUpload(chatId, msg, tipo);
-        await bot.sendMessage(chatId, `Foto de la ${displayName} registrada correctamente.`);
-      });
-    } else if (msg.text === 'No ⛔') {
-      await bot.sendMessage(chatId, `Por favor, monte la ${displayName} antes de continuar.`);
-    } else {
-      await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
-      await manageBarSetup(chatId, barType, displayName);
-    }
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      if (msg.text === 'Sí ✅') {
+        await bot.sendMessage(chatId, `Por favor, suba una foto de la ${displayName}.`);
+        bot.once('photo', async (msg) => {
+          const tipo = `barra de ${barType}`;
+          await handlePhotoUpload(chatId, msg, tipo);
+          await bot.sendMessage(chatId, `Foto de la ${displayName} registrada correctamente.`);
+          resolve();
+        });
+      } else if (msg.text === 'No ⛔') {
+        await bot.sendMessage(chatId, `Por favor, monte la ${displayName} antes de continuar.`);
+        resolve();
+      } else {
+        await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
+        await manageBarSetup(chatId, barType, displayName);
+        resolve();
+      }
+    });
   });
 }
 
