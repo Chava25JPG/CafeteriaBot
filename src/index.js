@@ -407,81 +407,83 @@ let previousHandler = null; // Referencia al handler anterior para poder remover
 async function handleTask(task, chatId) {
   switch (task) {
     case 'Barra de Food':
-        await manageBarSetup(chatId, 'food', 'Barra de Food');
-        break;
+      await manageBarSetup(chatId, 'food', 'Barra de Food');
+      break;
     case 'Barra de Panques':
-        await manageBarSetup(chatId, 'panques', 'Barra de Panques');
-        break;
+      await manageBarSetup(chatId, 'panques', 'Barra de Panques');
+      break;
     case 'Barra de Bebidas':
-        await manageBarSetup(chatId, 'bebidas', 'Barra de Bebidas');
-        break;
+      await manageBarSetup(chatId, 'bebidas', 'Barra de Bebidas');
+      break;
     case 'Rational':
-        await askRationalWindow(chatId);
-        break;
+      await askRationalWindow(chatId);
+      break;
     case 'Playlist':
-        await askPlaylistInfo(chatId);
-        break;
+      await askPlaylistInfo(chatId);
+      break;
     case 'Volumen de Bocinas':
-        await askSpeakersVolume(chatId);
-        break;
+      await askSpeakersVolume(chatId);
+      break;
     case 'Terminar':
-        await bot.sendMessage(chatId, "Registro completo.");
-        break;
+      await bot.sendMessage(chatId, "Registro completo.");
+      break;
     default:
-        await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
-        await showTaskMenu(chatId);
-        break;
-}
-}
-
-
-
-// Función para mostrar el menú de tareas post-registro
-
-
-async function manageBarSetup(chatId, nextStep, barType) {
-  await bot.sendMessage(chatId, `¿Ha montado ya la barra de ${barType}?`, {
-      reply_markup: {
-          keyboard: [['Sí ✅', 'No ⛔']],
-          one_time_keyboard: true,
-          resize_keyboard: true
-      }
-  });
-
-  const photoHandler = async (msg) => {
-      if (msg.photo) {
-          const tipo = `barra de ${barType}`;
-          await handlePhotoUpload(chatId, msg, tipo);
-          bot.removeListener('message', photoHandler);
-          if (nextStep) {
-              await manageBarSetup(chatId, nextStep, nextStep);
-          }
-      }
-  };
-
-  bot.on('message', photoHandler);
+      await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
+      await showTaskMenu(chatId);
+      break;
+  }
 }
 
-
-
-
-async function askSpeakersVolume(chatId) {
-  await bot.sendMessage(chatId, "¿Las bocinas estan en un buen nivel de volumen?🔊",{
+async function manageBarSetup(chatId, barType, displayName) {
+  await bot.sendMessage(chatId, `¿Ha montado ya la ${displayName}?`, {
     reply_markup: {
       keyboard: [['Sí ✅', 'No ⛔']],
       one_time_keyboard: true,
       resize_keyboard: true
     }
   });
-  bot.once('message', async msg => {
-    if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si')) {
+
+  bot.once('message', async (msg) => {
+    if (msg.text === 'Sí ✅') {
+      await bot.sendMessage(chatId, `Por favor, suba una foto de la ${displayName}.`);
+      bot.once('photo', async (msg) => {
+        const tipo = `barra de ${barType}`;
+        await handlePhotoUpload(chatId, msg, tipo);
+        await bot.sendMessage(chatId, `Foto de la ${displayName} registrada correctamente.`);
+        await showTaskMenu(chatId);
+      });
+    } else if (msg.text === 'No ⛔') {
+      await bot.sendMessage(chatId, `Por favor, monte la ${displayName} antes de continuar.`);
+      await showTaskMenu(chatId);
+    } else {
+      await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
+      await manageBarSetup(chatId, barType, displayName);
+    }
+  });
+}
+
+async function askSpeakersVolume(chatId) {
+  await bot.sendMessage(chatId, "¿Las bocinas están en un buen nivel de volumen?🔊", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  bot.once('message', async (msg) => {
+    if (msg.text === 'Sí ✅') {
       const tipo = 'bocinas';
       const descripcion = 'Bocinas en buen nivel';
       await registerSpeakersVolume(chatId, tipo, descripcion);
       await bot.sendMessage(chatId, "Información de las bocinas registrada correctamente.👌");
-      await askRationalWindow(chatId);
-    } else {
+      await showTaskMenu(chatId);
+    } else if (msg.text === 'No ⛔') {
       await bot.sendMessage(chatId, "Por favor, asegúrese de que las bocinas estén en un buen nivel de volumen.");
+      await askSpeakersVolume(chatId);
+    } else {
+      await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
+      await askSpeakersVolume(chatId);
     }
   });
 }
