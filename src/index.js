@@ -495,7 +495,13 @@ async function registerSpeakersVolume(chatId, tipo, descripcion) {
 }
 
 async function askPlaylistInfo(chatId) {
-  await bot.sendMessage(chatId, "La playlist de Boicot Cafe se esta reproduciendo?💚🎶💚");
+  await bot.sendMessage(chatId, "La playlist de Boicot Cafe se esta reproduciendo?💚🎶💚", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
 
   return new Promise((resolve) => {
     bot.once('message', async (msg) => {
