@@ -366,43 +366,38 @@ function initializeTaskCompletion(chatId) {
 }
 
 async function showTaskMenu(chatId) {
-  initializeTaskCompletion(chatId);
+    initializeTaskCompletion(chatId);
 
-  const options = Object.entries(taskCompletion[chatId]).reduce((acc, [key, completed]) => {
-      if (!completed) {
-          acc.push([key]);
-      }
-      return acc;
-  }, []);
+    const options = Object.entries(taskCompletion[chatId]).filter(([task, done]) => !done).map(([task]) => [task]);
+    options.push(['Terminar']); // Opción para terminar y cerrar el menú
 
-  options.push(['Terminar']);  // Opción para terminar y cerrar el menú
+    await bot.sendMessage(chatId, "Seleccione la tarea a registrar:", {
+        reply_markup: {
+            keyboard: options,
+            one_time_keyboard: true,
+            resize_keyboard: true
+        }
+    });
 
-  await bot.sendMessage(chatId, "Seleccione la tarea a registrar:", {
-      reply_markup: {
-          keyboard: options,
-          one_time_keyboard: true,
-          resize_keyboard: true
-      }
-  });
+    // Manejar la respuesta del usuario
+    const handler = async (msg) => {
+        const text = msg.text;
+        if (text === 'Terminar') {
+            await bot.sendMessage(chatId, "Registro completo.");
+            bot.removeListener('message', handler);
+            return;
+        }
+        if (taskCompletion[chatId][text] === false) {
+            taskCompletion[chatId][text] = true;
+            await handleTask(text, chatId);
+            await showTaskMenu(chatId);
+        } else {
+            await bot.sendMessage(chatId, "Seleccione una opción válida.");
+            await showTaskMenu(chatId);
+        }
+    };
 
-  bot.once('message', async msg => {
-      if (msg.text === 'Terminar') {
-          await bot.sendMessage(chatId, "Registro completo.");
-          delete taskCompletion[chatId]; // Limpia el estado al terminar
-          return;
-      }
-      
-      if (taskCompletion[chatId][msg.text] === false) {
-          taskCompletion[chatId][msg.text] = true;  // Marca como completada
-          // Llama a la función correspondiente
-          await handleTask(msg.text, chatId);
-          // Vuelve al menú, que ahora estará actualizado
-          await showTaskMenu(chatId);
-      } else {
-          await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
-          await showTaskMenu(chatId);
-      }
-  });
+    bot.on('message', handler);
 }
 
 async function handleTask(task, chatId) {
