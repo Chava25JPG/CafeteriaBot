@@ -446,12 +446,16 @@ async function manageBarSetup(chatId, barType, displayName) {
   bot.once('message', async (msg) => {
     if (msg.text === 'Sí ✅') {
       await bot.sendMessage(chatId, `Por favor, suba una foto de la ${displayName}.`);
-      bot.once('photo', async (msg) => {
-        const tipo = `barra de ${barType}`;
-        await handlePhotoUpload(chatId, msg, tipo);
-        await bot.sendMessage(chatId, `Foto de la ${displayName} registrada correctamente.`);
-        await showTaskMenu(chatId);
-      });
+      const photoHandler = async (msg) => {
+        if (msg.photo) {
+          const tipo = `barra de ${barType}`;
+          await handlePhotoUpload(chatId, msg, tipo);
+          await bot.sendMessage(chatId, `Foto de la ${displayName} registrada correctamente.`);
+          bot.removeListener('message', photoHandler);
+          await showTaskMenu(chatId);
+        }
+      };
+      bot.on('message', photoHandler);
     } else if (msg.text === 'No ⛔') {
       await bot.sendMessage(chatId, `Por favor, monte la ${displayName} antes de continuar.`);
       await showTaskMenu(chatId);
