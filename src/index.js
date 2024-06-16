@@ -662,7 +662,7 @@ async function manageEquipmentIssues2(chatId) {
     }
   });
 }
-
+//no se reportaron equipos daniados!!!!!!!
 bot.onText(/\/reporte_danio/, (msg) => {
   const chatId = msg.chat.id;  // Extrae el chat_id del mensaje recibido
   manageEquipmentIssues2(chatId);         // Llama a la función y pasa el chat_id

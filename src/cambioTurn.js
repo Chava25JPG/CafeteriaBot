@@ -151,156 +151,215 @@ async function getFileLink(fileId) {
     });
   }
   
-  async function handleAdditionalOptions(chatId) {
-    await bot.sendMessage(chatId, "Seleccione una opción:", {
-      reply_markup: {
-        keyboard: [['Marcar falta⛔', 'Marcar retardo⛔🕐'], ['Finalizar registro✨']],
-        one_time_keyboard: true,
-        resize_keyboard: true
-      }
-    });
   
-    bot.once('message', async msg => {
+async function handleAdditionalOptions(chatId) {
+  await bot.sendMessage(chatId, "Seleccione una opción:", {
+      reply_markup: {
+          keyboard: [
+              ['Marcar falta⛔', 'Marcar retardo⛔🕐'],
+              ['Finalizar registro✨']
+          ],
+          one_time_keyboard: true,
+          resize_keyboard: true
+      }
+  });
+
+  bot.once('message', async msg => {
       if (msg.text) {
-        switch (msg.text.toLowerCase()) {
-          case 'marcar falta⛔':
-          case 'marcar retardo⛔🕐':
-            await handleFaltaRetardo(chatId, msg.text);
-            break;
-          case 'finalizar registro✨':
-            await bot.sendMessage(chatId, "Registro de asistencia terminado.👌");
-            await manageBarSetup(chatId, 'panques🧁', 'barra de panques');
-            break;
-        }
+          switch (msg.text.toLowerCase()) {
+              case 'marcar falta⛔':
+              case 'marcar retardo⛔🕐':
+                  await handleFaltaRetardo(chatId, msg.text);
+                  break;
+              case 'finalizar registro✨':
+                  await showTaskMenu(chatId);
+                  break;
+          }
       } else {
-        await bot.sendMessage(chatId, "Por favor, envíe un mensaje de texto.");
+          await bot.sendMessage(chatId, "Por favor, envíe un mensaje de texto.");
       }
-    });
+  });
+}
+
+const taskCompletion = {};
+
+function initializeTaskCompletion(chatId) {
+    taskCompletion[chatId] = {
+        'Barra de Food': false,
+        'Barra de Panques': false,
+        'Barra de Bebidas': false,
+        
+        'Playlist': false,
+        'Volumen de Bocinas': false
+    };
+}
+
+async function showTaskMenu(chatId) {
+  initializeTaskCompletion(chatId); // Asegura que taskCompletion[chatId] esté inicializado
+
+  const options = Object.entries(taskCompletion[chatId])
+    .filter(([task, done]) => !done)
+    .map(([task]) => [task]);
+
+  if (options.length === 0) {
+    await bot.sendMessage(chatId, "Todas las tareas han sido registradas. ¡Buen trabajo!");
+    delete taskCompletion[chatId]; // Limpia el estado al terminar
+    return;
   }
-  
-  async function manageBarSetup(chatId, nextStep, barType) {
-    await bot.sendMessage(chatId, `¿Ha montado ya la barra de ${barType}?`,{
-      reply_markup: {
-        keyboard: [['Sí ✅', 'No ⛔']],
-        one_time_keyboard: true,
-        resize_keyboard: true
-      }
-    }) ;
-    bot.once('message', async msg => {
+
+  options.push(['Terminar']); // Opción para terminar y cerrar el menú
+
+  await bot.sendMessage(chatId, "Seleccione la tarea a registrar:", {
+    reply_markup: {
+      keyboard: options,
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  // Manejar la respuesta del usuario
+  bot.once('message', async (msg) => {
+    const text = msg.text;
+    if (text === 'Terminar') {
+      await bot.sendMessage(chatId, "Registro completo.");
+      delete taskCompletion[chatId]; // Limpia el estado al terminar
+      return;
+    }
+    if (taskCompletion[chatId][text] === false) {
+      taskCompletion[chatId][text] = true;  // Marca como completada
+      await handleTask(text, chatId);
+    } else {
+      await bot.sendMessage(chatId, "Seleccione una opción válida.");
+      await showTaskMenu(chatId);
+    }
+  });
+}
+
+async function handleTask(task, chatId) {
+  switch (task) {
+    case 'Barra de Food':
+      await manageBarSetup(chatId, 'food', 'Barra de Food');
+      break;
+    case 'Barra de Panques':
+      await manageBarSetup(chatId, 'panques', 'Barra de Panques');
+      break;
+    case 'Barra de Bebidas':
+      await manageBarSetup(chatId, 'bebidas', 'Barra de Bebidas');
+      break;
+    case 'Playlist':
+      await askPlaylistInfo(chatId);
+      break;
+    case 'Volumen de Bocinas':
+      await askSpeakersVolume(chatId);
+      break;
       
-      if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si')) {
-        await bot.sendMessage(chatId, `Por favor, suba una foto de la barra de ${barType} montada.`);
+    default:
+      await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
+      break;
+  }
+  await showTaskMenu(chatId);
+}
+
+async function manageBarSetup(chatId, barType, displayName) {
+  await bot.sendMessage(chatId, `¿Ha montado ya la ${displayName}?`, {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      if (msg.text === 'Sí ✅') {
+        await bot.sendMessage(chatId, `Por favor, suba una foto de la ${displayName}.`);
         bot.once('photo', async (msg) => {
           const tipo = `barra de ${barType}`;
           await handlePhotoUpload(chatId, msg, tipo);
-          const nextBar = nextStep === 'panques🧁' ? 'food🍲' : nextStep === 'food🍲' ? 'bebidas🍹' : 'equipos dañados';
-          if (nextBar !== 'equipos dañados') {
-            await manageBarSetup(chatId, nextBar, nextBar);
-          } else {
-            await manageEquipmentIssues(chatId);
-          }
+          await bot.sendMessage(chatId, `Foto de la ${displayName} registrada correctamente.`);
+          resolve();
         });
+      } else if (msg.text === 'No ⛔') {
+        await bot.sendMessage(chatId, `Por favor, monte la ${displayName} antes de continuar.`);
+        resolve();
       } else {
-        await bot.sendMessage(chatId, `Por favor monte la barra de ${barType} y luego suba la foto.`);
+        await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
+        await manageBarSetup(chatId, barType, displayName);
+        resolve();
       }
     });
-  }
-  
-  async function manageEquipmentIssues(chatId) {
-    await bot.sendMessage(chatId, "¿Hay algún equipo dañado que necesite reportar?",{
-      reply_markup: {
-        keyboard: [['Sí ✅', 'No ⛔']],
-        one_time_keyboard: true,
-        resize_keyboard: true
-      }
-    });
-    bot.once('message', async msg => {
-      if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si')) {
-        await bot.sendMessage(chatId, "Por favor, describa el problema del equipo.");
-        bot.once('message', async descMsg => {
-          if (descMsg.text) {
-            await bot.sendMessage(chatId, "Ahora, por favor suba una foto del equipo dañado📸⛔.");
-            bot.once('photo', async (msg) => {
-              const tipo = 'equipos dañados';
-              const descripcion = descMsg.text;
-              await handlePhotoUpload(chatId, msg, tipo, descripcion);
-              await bot.sendMessage(chatId, "Reporte de equipo dañado completado👌.");
-              await askPlaylistInfo(chatId);
-            });
-          } else {
-            await bot.sendMessage(chatId, "Por favor proporcione una descripción del problema.");
-          }
-        });
-      } else {
-        await bot.sendMessage(chatId, "No se reportaron equipos dañados.😎");
-        await askPlaylistInfo(chatId);
-      }
-    });
-  }
-  
-  
-  async function askSpeakersVolume(chatId) {
-    await bot.sendMessage(chatId, "¿Las bocinas estan en un buen nivel de volumen🔊?",{
-      reply_markup: {
-        keyboard: [['Sí ✅', 'No ⛔']],
-        one_time_keyboard: true,
-        resize_keyboard: true
-      }
-    });
-    bot.once('message', async msg => {
-      if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si')) {
+  });
+}
+
+async function askSpeakersVolume(chatId) {
+  await bot.sendMessage(chatId, "¿Las bocinas están en un buen nivel de volumen?🔊", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      if (msg.text === 'Sí ✅') {
         const tipo = 'bocinas';
         const descripcion = 'Bocinas en buen nivel';
         await registerSpeakersVolume(chatId, tipo, descripcion);
-        await bot.sendMessage(chatId, "Información de las bocinas registrada correctamente.");
-        await askRationalWindow(chatId);
-      } else {
+        await bot.sendMessage(chatId, "Información de las bocinas registrada correctamente.👌");
+        resolve();
+      } else if (msg.text === 'No ⛔') {
         await bot.sendMessage(chatId, "Por favor, asegúrese de que las bocinas estén en un buen nivel de volumen.");
+        await askSpeakersVolume(chatId);
+        resolve();
+      } else {
+        await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
+        await askSpeakersVolume(chatId);
+        resolve();
       }
     });
-  }
-  
-  async function registerSpeakersVolume(chatId, tipo, descripcion) {
-    const now = moment().tz('America/Mexico_City');
-    const fecha = now.format('YYYY-MM-DD');
-    const file_url = ''; // Dejar vacío ya que no se sube foto
-    await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion);
-  }
-  
-  
-  async function askPlaylistInfo(chatId) {
-    await bot.sendMessage(chatId, "La playlist de Boicot Cafe se esta reproduciendo?💚🎶💚");
-    bot.once('message', async msg => {
+  });
+}
+
+async function registerSpeakersVolume(chatId, tipo, descripcion) {
+  const now = moment().tz('America/Mexico_City');
+  const fecha = now.format('YYYY-MM-DD');
+  const file_url = ''; // Dejar vacío ya que no se sube foto
+  await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion);
+}
+
+async function askPlaylistInfo(chatId) {
+  await bot.sendMessage(chatId, "La playlist de Boicot Cafe se esta reproduciendo?💚🎶💚", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
       if (msg.text) {
         const playlistName = msg.text;
         await bot.sendMessage(chatId, "Por favor, suba una foto de la pantalla que muestra la playlist.📸💚");
+
         bot.once('photo', async (msg) => {
           const tipo = 'playlist';
           const descripcion = playlistName;
           await handlePhotoUpload(chatId, msg, tipo, descripcion);
           await bot.sendMessage(chatId, "Información de la playlist registrada correctamente.💚👌");
-          await askSpeakersVolume(chatId);
+          resolve();
         });
       } else {
         await bot.sendMessage(chatId, "Por favor, envíe el nombre de la playlist como un mensaje de texto.");
+        await askPlaylistInfo(chatId);
+        resolve();
       }
     });
-  }
-  
-  
-  
-  
-  async function askRationalWindow(chatId) {
-    await bot.sendMessage(chatId, "Por favor, suba una foto de la ventana Rational limpia.");
-    bot.once('photo', async (msg) => {
-      const tipo = 'ventana rational';
-      const descripcion = 'Ventana Rational limpia';
-      await handlePhotoUpload(chatId, msg, tipo, descripcion);
-      await bot.sendMessage(chatId, "Foto de la ventana Rational registrada correctamente.");
-      
-    });
-  }
-  
+  });
+}
+
+
   
   
   async function handleFaltaRetardo(chatId, tipo) {
