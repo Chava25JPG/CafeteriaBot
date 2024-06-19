@@ -126,29 +126,32 @@ def obtener_lista_empleados(folder_id, archivo_nombre):
 
 def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora, rol, motivo=None):
     try:
+        # Zona horaria de México
         mx_zone = timezone('America/Mexico_City')
-        now = datetime.now(mx_zone)
-        fecha_actual = now.strftime('%Y-%m-%d')
-        hora_actual = now.strftime('%H:%M')
+        
+        # Usar la fecha y hora actuales del servidor si no se proporciona
+        if not fecha or not hora:
+            now = datetime.now(mx_zone)
+        else:
+            # Convertir la fecha y hora proporcionadas a la zona horaria de México
+            naive_datetime = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
+            local_dt = mx_zone.localize(naive_datetime, is_dst=None)
+            now = local_dt.astimezone(mx_zone)
 
-        # Si no se especifica fecha y hora, usar la actual
-        fecha = fecha if fecha else fecha_actual
-        hora = hora if hora else hora_actual
-
-        mx_time = datetime.strptime(fecha, "%Y-%m-%d").astimezone(mx_zone)
-        year = mx_time.strftime('%Y')
-        month = mx_time.strftime('%m')
-        day = mx_time.strftime('%d')
-        weekday = mx_time.strftime('%A')
-
-        # Crear/Buscar carpetas de año y mes
+        # Formatear la fecha y hora para nombres de archivo y registro
+        year = now.strftime('%Y')
+        month = now.strftime('%m')
+        day = now.strftime('%d')
+        weekday = now.strftime('%A')
+        formatted_file_name = f"{day}{month}{weekday}Reporte"
+        
+        # Buscar o crear la carpeta del año y del mes
         year_folder_id = buscar_crear_carpeta(year, folder_id)
         month_folder_id = buscar_crear_carpeta(month, year_folder_id)
-
-        # Formatear nombre de archivo con día y día de la semana
-        formatted_file_name = f"{day}{month}{weekday}Reporte"
+        
+        # Buscar el archivo por el nombre formateado o crear uno nuevo
         sheet_id = buscar_archivo(formatted_file_name, month_folder_id)
-        if not sheet_id:  # Si no existe, crearlo
+        if not sheet_id:
             file_metadata = {
                 'name': formatted_file_name,
                 'mimeType': 'application/vnd.google-apps.spreadsheet',
@@ -156,15 +159,14 @@ def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora, rol, 
             }
             file = drive_service.files().create(body=file_metadata, fields='id').execute()
             sheet_id = file.get('id')
-            # Inicializar la hoja si es nuevo
             headers = ['Empleado', 'Hora', 'Rol', 'Motivo']
             actualizar_datos(sheet_id, 'A1:D1', [headers], 'USER_ENTERED')
 
-        # Actualizar datos
-        fecha_hora = f"{fecha} {hora}"
+        # Registrar la asistencia
+        fecha_hora = now.strftime('%Y-%m-%d %H:%M')
         data = [empleado, fecha_hora, rol, motivo or '']
         empleados = leer_datos(sheet_id, 'A2:A')
-        fila_empleado = len(empleados) + 2  # Sumar dos para considerar la fila de encabezados
+        fila_empleado = len(empleados) + 2  # Considerando la fila de encabezados
         actualizar_datos(sheet_id, f'A{fila_empleado}:D{fila_empleado}', [data], 'USER_ENTERED')
         print("Asistencia registrada correctamente.")
     except Exception as e:
