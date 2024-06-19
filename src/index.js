@@ -657,28 +657,33 @@ function subirFoto(folder_id,fecha ,file_url, tipo, descripcion) {
   });
 }
 
-function subirReporteDanio(folder_id, fecha, file_url, tipo, descripcion) {
+function subirFoto(folder_id, fecha, file_url, tipo, descripcion) {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_reporte_danio', folder_id, fecha, file_url, tipo, descripcion]);
 
+    let dataOutput = '';
+    let errorOutput = '';
+
     pythonProcess.stdout.on('data', (data) => {
-      console.log(`Python Output: ${data.toString()}`);
+      dataOutput += data.toString();
     });
 
     pythonProcess.stderr.on('data', (data) => {
-      console.error(`Python Error: ${data.toString()}`);
-      reject(new Error(`Python Error: ${data.toString()}`));
+      errorOutput += data.toString();
     });
 
     pythonProcess.on('close', (code) => {
+      console.log(`Python Output: ${dataOutput}`);
       if (code === 0) {
         resolve();
       } else {
-        reject(new Error(`Python script exited with code ${code}`));
+        console.error(`Python Error: ${errorOutput}`);
+        reject(new Error(`Python script exited with code ${code}: ${errorOutput}`));
       }
     });
   });
 }
+
 
 async function handlePhotoUpload1(chatId, msg, tipo, descripcion = '') {
   if (msg.photo) {
