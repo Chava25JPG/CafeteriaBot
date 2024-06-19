@@ -392,6 +392,7 @@ async function showTaskMenu(chatId) {
     const text = msg.text;
     if (text === 'Terminar') {
       await bot.sendMessage(chatId, "Registro completo.");
+      await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
       delete taskCompletion[chatId]; // Limpia el estado al terminar
       return;
     }
@@ -764,9 +765,9 @@ bot.on('message', async (msg) => {
   if (msg.text === '🌞Turno Matutino🌞') {
     handleAsistenciaCommand(chatId);
   } else if (msg.text === '🚪Cierre🚪') {
-    handleShiftStart(chatId, askDesmonte); 
+    askDesmonte(chatId);
   } else if (msg.text === '🌕Turno Vespertino🌕') {
-    handleShiftStart(chatId, handleCambioCommand);
+    handleCambioCommand(chatId);
   } else if (msg.text === '❕Mas opciones❕') {
     handleAdditionalOptions1(chatId); 
   }
