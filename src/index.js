@@ -409,7 +409,8 @@ async function showTaskMenu(chatId) {
 }
 
 async function sendSheetLinkToTelegramGroup(chatId) {
-  const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py']);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
+  folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
+  const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
 
   let dataOutput = '';
   let errorOutput = '';

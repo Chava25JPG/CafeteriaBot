@@ -4,54 +4,64 @@ from datetime import datetime
 from pytz import timezone
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
-import os
-from PIL import Image
-import base64
-from googleapiclient.http import MediaFileUpload
-import requests
 
 # Configuración de las credenciales
 SERVICE_ACCOUNT_FILE = './cafeteriabot-423500-4f883c22c073.json'
 SCOPES = ['https://www.googleapis.com/auth/drive', 'https://www.googleapis.com/auth/spreadsheets']
 
-credentials = Credentials.from_service_account_file(
-    SERVICE_ACCOUNT_FILE, scopes=SCOPES)
-
-# Construir el servicio de Google Drive y Google Sheets
+credentials = Credentials.from_service_account_file(SERVICE_ACCOUNT_FILE, scopes=SCOPES)
 drive_service = build('drive', 'v3', credentials=credentials)
+sheets_service = build('sheets', 'v4', credentials=credentials)
 
-def obtener_o_crear_archivo_dia_especifico():
-    """Encuentra o crea un archivo de Google Sheets para el día actual y lo hace público."""
-    mx_zone = timezone('America/Mexico_City')
-    today = datetime.now(mx_zone).date()
-    formatted_file_name = f"Registro de Asistencia {today.strftime('%Y-%m-%d')}"
-
-    query = f"name='{formatted_file_name}' and mimeType='application/vnd.google-apps.spreadsheet'"
+def buscar_crear_carpeta(folder_name, parent_id=None):
+    query = f"name='{folder_name}' and mimeType='application/vnd.google-apps.folder'"
+    if parent_id:
+        query += f" and '{parent_id}' in parents"
     response = drive_service.files().list(q=query).execute()
+    folders = response.get('files', [])
+    if not folders:
+        folder_metadata = {
+            'name': folder_name,
+            'mimeType': 'application/vnd.google-apps.folder',
+            'parents': [parent_id] if parent_id else []
+        }
+        folder = drive_service.files().create(body=folder_metadata, fields='id').execute()
+        return folder['id']
+    return folders[0]['id']
+
+def buscar_archivo_en_carpeta(nombre_archivo, folder_id):
+    query = f"name = '{nombre_archivo}' and '{folder_id}' in parents and trashed = false"
+    response = drive_service.files().list(q=query, fields='files(id, webViewLink)').execute()
     files = response.get('files', [])
+    if files:
+        return files[0]['webViewLink']
+    return None
 
-    if not files:
-        file_metadata = {'name': formatted_file_name, 'mimeType': 'application/vnd.google-apps.spreadsheet'}
-        file = drive_service.files().create(body=file_metadata, fields='id').execute()
-        file_id = file.get('id')
-        print(f"Archivo creado con ID: {file_id}")
+def obtener_link_archivo_diario(folder_id):
+    # Establecer zona horaria de México
+    mx_zone = timezone('America/Mexico_City')
+    today = datetime.now(mx_zone)
+    year = today.strftime('%Y')
+    month = today.strftime('%m')
+    day = today.strftime('%d')
+    weekday = today.strftime('%A')
+
+    # Buscar carpeta del año y mes
+    year_folder_id = buscar_crear_carpeta(year, folder_id)
+    month_folder_id = buscar_crear_carpeta(month, year_folder_id)
+
+    # Nombre del archivo con formato día-mes-díaSemanaReporte
+    formatted_file_name = f"{day}{month}{weekday}Reporte"
+    file_link = buscar_archivo_en_carpeta(formatted_file_name, month_folder_id)
+    if file_link:
+        return file_link
     else:
-        file_id = files[0]['id']
-        print(f"Archivo encontrado con ID: {file_id}")
+        print("No se encontró el archivo correspondiente al día actual.")
+        return None
 
-    # Hacer el archivo visible para cualquiera con el enlace
-    permission = {
-        'type': 'anyone',
-        'role': 'reader'
-    }
-    drive_service.permissions().create(fileId=file_id, body=permission).execute()
-
-    # Obtener el enlace webViewLink para compartir
-    file = drive_service.files().get(fileId=file_id, fields='webViewLink').execute()
-    link = file.get('webViewLink')
-    print(f"Enlace para compartir: {link}")
-    return link
-
+# Ejemplo de uso
 if __name__ == '__main__':
-    link = obtener_o_crear_archivo_dia_especifico()
-    print(link)
+    folder_id = sys.argv[1]  # El ID de la carpeta se pasa como argumento al script
+    link = obtener_link_archivo_diario(folder_id)
+    if link:
+        print(f"Enlace al archivo: {link}")
