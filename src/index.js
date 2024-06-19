@@ -658,16 +658,7 @@ function subirFoto(folder_id,fecha ,file_url, tipo, descripcion) {
 }
 
 async function manageEquipmentIssues2(chatId) {
-  await bot.sendMessage(chatId, "¿Hay algún equipo dañado que necesite reportar? 💥💥💥",{
-    reply_markup: {
-      keyboard: [['Sí ✅', 'No ⛔']],
-      one_time_keyboard: true,
-      resize_keyboard: true
-    }
-  });
-  bot.once('message', async msg => {
-    if (msg.text && (msg.text.toLowerCase() === 'sí ✅' || msg.text.toLowerCase() === 'si')) {
-      await bot.sendMessage(chatId, "Por favor, describa el problema del equipo.🔨");
+  await bot.sendMessage(chatId, "Por favor, describa el problema del equipo.🔨");
       bot.once('message', async descMsg => {
         if (descMsg.text) {
           await bot.sendMessage(chatId, "Ahora, por favor suba una foto del equipo dañado.📸📸");
@@ -683,11 +674,7 @@ async function manageEquipmentIssues2(chatId) {
           await bot.sendMessage(chatId, "Por favor proporcione una descripción del problema.");
         }
       });
-    } else {
-      await bot.sendMessage(chatId, "No se reportaron equipos dañados.");
-      callback(chatId);
-    }
-  });
+  
 }
 //no se reportaron equipos daniados!!!!!!!
 bot.onText(/\/reporte_danio/, (msg) => {
