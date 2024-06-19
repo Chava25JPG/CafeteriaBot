@@ -222,6 +222,7 @@ async function showTaskMenu(chatId) {
     const text = msg.text;
     if (text === 'Terminar') {
       await bot.sendMessage(chatId, "Registro completo.");
+      sendSheetLinkToTelegramGroup(chatId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
       delete taskCompletion[chatId]; // Limpia el estado al terminar
       return;
@@ -233,6 +234,32 @@ async function showTaskMenu(chatId) {
       await bot.sendMessage(chatId, "Seleccione una opción válida.");
       await showTaskMenu(chatId);
     }
+  });
+}
+
+async function sendSheetLinkToTelegramGroup(chatId) {
+  folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
+  const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
+
+  let dataOutput = '';
+  let errorOutput = '';
+
+  pythonProcess.stdout.on('data', (data) => {
+      dataOutput += data.toString();
+  });
+
+  pythonProcess.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+  });
+
+  pythonProcess.on('close', (code) => {
+      if (code === 0) {
+          console.log(`Python Output: ${dataOutput}`);
+          bot.sendMessage(chatId, `Aquí está el enlace del archivo de el reporte Actualizado a Vespertino: ${dataOutput.trim()}`).catch(console.error);
+      } else {
+          console.error(`Python Error: ${errorOutput}`);
+          bot.sendMessage(chatId, "Hubo un error al obtener el archivo Actualizado a Vespertino").catch(console.error);
+      }
   });
 }
 

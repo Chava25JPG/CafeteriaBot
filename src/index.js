@@ -426,10 +426,10 @@ async function sendSheetLinkToTelegramGroup(chatId) {
   pythonProcess.on('close', (code) => {
       if (code === 0) {
           console.log(`Python Output: ${dataOutput}`);
-          bot.sendMessage(chatId, `Aquí está el enlace del archivo de asistencia de hoy: ${dataOutput.trim()}`).catch(console.error);
+          bot.sendMessage(chatId, `Aquí está el enlace del archivo de el reporte Matutino: ${dataOutput.trim()}`).catch(console.error);
       } else {
           console.error(`Python Error: ${errorOutput}`);
-          bot.sendMessage(chatId, "Hubo un error al obtener el archivo de asistencia.").catch(console.error);
+          bot.sendMessage(chatId, "Hubo un error al obtener el archivo Matutino").catch(console.error);
       }
   });
 }
