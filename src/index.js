@@ -667,7 +667,7 @@ async function manageEquipmentIssues2(chatId) {
             const descripcion = descMsg.text;
             await handlePhotoUpload(chatId, msg, tipo, descripcion);
             await bot.sendMessage(chatId, "Reporte de equipo dañado completado. 😀");
-            callback(chatId);
+            handleAdditionalOptions1(chatId);
             
           });
         } else {
