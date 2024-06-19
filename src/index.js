@@ -8,6 +8,7 @@ const { google } = require('googleapis');
 const moment = require('moment-timezone');
 const bot = require('./confBot.js')
 const { handleCambioCommand } = require('./cambioTurn.js');
+const groupId = -4238334308;
 const { askDesmonte } = require('./Cierre.js')
 const axios = require('axios');  // Asegúrate de tener Axios instalado
 let dateFormat;
@@ -392,6 +393,7 @@ async function showTaskMenu(chatId) {
     const text = msg.text;
     if (text === 'Terminar') {
       await bot.sendMessage(chatId, "Registro completo.");
+      sendSheetLinkToTelegramGroup(groupId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
       delete taskCompletion[chatId]; // Limpia el estado al terminar
       return;
@@ -403,6 +405,31 @@ async function showTaskMenu(chatId) {
       await bot.sendMessage(chatId, "Seleccione una opción válida.");
       await showTaskMenu(chatId);
     }
+  });
+}
+
+async function sendSheetLinkToTelegramGroup(chatId) {
+  const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py']);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
+
+  let dataOutput = '';
+  let errorOutput = '';
+
+  pythonProcess.stdout.on('data', (data) => {
+      dataOutput += data.toString();
+  });
+
+  pythonProcess.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+  });
+
+  pythonProcess.on('close', (code) => {
+      if (code === 0) {
+          console.log(`Python Output: ${dataOutput}`);
+          bot.sendMessage(chatId, `Aquí está el enlace del archivo de asistencia de hoy: ${dataOutput.trim()}`).catch(console.error);
+      } else {
+          console.error(`Python Error: ${errorOutput}`);
+          bot.sendMessage(chatId, "Hubo un error al obtener el archivo de asistencia.").catch(console.error);
+      }
   });
 }
 
