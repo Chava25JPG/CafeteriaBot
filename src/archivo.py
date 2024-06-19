@@ -127,6 +127,14 @@ def obtener_lista_empleados(folder_id, archivo_nombre):
 def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora, rol, motivo=None):
     try:
         mx_zone = timezone('America/Mexico_City')
+        now = datetime.now(mx_zone)
+        fecha_actual = now.strftime('%Y-%m-%d')
+        hora_actual = now.strftime('%H:%M')
+
+        # Si no se especifica fecha y hora, usar la actual
+        fecha = fecha if fecha else fecha_actual
+        hora = hora if hora else hora_actual
+
         mx_time = datetime.strptime(fecha, "%Y-%m-%d").astimezone(mx_zone)
         year = mx_time.strftime('%Y')
         month = mx_time.strftime('%m')
