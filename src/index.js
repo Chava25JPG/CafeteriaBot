@@ -583,7 +583,34 @@ async function handleFaltaRetardo(chatId, tipo) {
       const rol = tipo === 'Marcar falta' ? 'Falta' : 'Retardo';
       await registrarAsistencia(empleado, fecha, hora, rol, motivo);
       await bot.sendMessage(chatId, `Se ha registrado un ${tipo.toLowerCase()} para ${empleado}.`);
-      askForMore(chatId);
+      handleAdditionalOptions(chatId);
+    });
+  });
+}
+
+async function handleFaltaRetardo1(chatId, tipo) {
+  const now = moment().tz('America/Mexico_City');
+  const fecha = now.format('YYYY-MM-DD');
+  const employees = await obtenerEmpleados();
+
+  await bot.sendMessage(chatId, `Seleccione el empleado para ${tipo.toLowerCase()}:`, {
+    reply_markup: {
+      keyboard: employees.map(name => [{ text: name }]),
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  bot.once('message', async msg => {
+    const empleado = msg.text;
+    await bot.sendMessage(chatId, `Ingrese el motivo del ${tipo.toLowerCase()}:`);
+    bot.once('message', async msg => {
+      const motivo = msg.text;
+      const hora = now.format('HH:mm:ss');
+      const rol = tipo === 'Marcar falta' ? 'Falta' : 'Retardo';
+      await registrarAsistencia(empleado, fecha, hora, rol, motivo);
+      await bot.sendMessage(chatId, `Se ha registrado un ${tipo.toLowerCase()} para ${empleado}.`);
+      handleAdditionalOptions1(chatId);
     });
   });
 }
@@ -685,11 +712,11 @@ bot.onText(/\/apertura_turno/, (msg) => {
         ['🌞Turno Matutino🌞', '🌕Turno Vespertino🌕'],
         ['🚪Cierre🚪', '❕Mas opciones❕']
       ],
-      one_time_keyboard: true
+      one_time_keyboard: true,
+      resize_keyboard: true
     }
   });
 });
-
 
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
@@ -697,12 +724,46 @@ bot.on('message', async (msg) => {
     handleAsistenciaCommand(chatId);
   } else if (msg.text === '🚪Cierre🚪') {
     handleShiftStart(chatId, askDesmonte); 
-  } else if (msg.text === '🌕Turno Vespertino🌕'){
+  } else if (msg.text === '🌕Turno Vespertino🌕') {
     handleShiftStart(chatId, handleCambioCommand);
-  }else if (msg.text === '❕Mas opciones❕'){
-    handleAdditionalOptions(chatId); 
+  } else if (msg.text === '❕Mas opciones❕') {
+    handleAdditionalOptions1(chatId); 
   }
 });
+
+async function handleAdditionalOptions1(chatId) {
+  await bot.sendMessage(chatId, "Seleccione una opción:", {
+      reply_markup: {
+          keyboard: [
+              ['Marcar falta⛔', 'Marcar retardo⛔🕐'],
+              ['Finalizar registro✨', 'Reportar equipo dañado⚠️']
+          ],
+          one_time_keyboard: true,
+          resize_keyboard: true
+      }
+  });
+
+  bot.once('message', async msg => {
+      if (msg.text) {
+          switch (msg.text.toLowerCase()) {
+              case 'marcar falta⛔':
+              case 'marcar retardo⛔🕐':
+                  await handleFaltaRetardo1(chatId, msg.text);
+                  break;
+              case 'finalizar registro✨':
+                  await bot.sendMessage(chatId, "Regresando a apertura de turno.");
+                  await bot.emit('text', {chat: {id: chatId}, text: '/apertura_turno'}); // Simula el comando /apertura_turno
+                  break;
+              case 'reportar equipo dañado⚠️':
+                  await manageEquipmentIssues2(chatId);
+                  break;
+          }
+      } else {
+          await bot.sendMessage(chatId, "Por favor, envíe un mensaje de texto.");
+      }
+  });
+}
+
 
 
 async function handleShiftStart(chatId, callback) {

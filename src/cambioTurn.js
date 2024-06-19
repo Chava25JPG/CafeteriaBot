@@ -384,7 +384,7 @@ async function askPlaylistInfo(chatId) {
         const rol = tipo === 'Marcar falta' ? 'Falta' : 'Retardo';
         await registrarAsistencia(empleado, fecha, hora, rol, motivo);
         await bot.sendMessage(chatId, `Se ha registrado un ${tipo.toLowerCase()} para ${empleado}.`);
-        askForMore(chatId);
+        handleAdditionalOptions(chatId);
       });
     });
   }
