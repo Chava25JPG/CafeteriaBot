@@ -657,7 +657,7 @@ function subirFoto(folder_id,fecha ,file_url, tipo, descripcion) {
   });
 }
 
-function subirFoto(folder_id, fecha, file_url, tipo, descripcion) {
+function subirReporteDanio(folder_id, fecha, file_url, tipo, descripcion) {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_reporte_danio', folder_id, fecha, file_url, tipo, descripcion]);
 
