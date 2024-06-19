@@ -124,7 +124,7 @@ def obtener_lista_empleados(folder_id, archivo_nombre):
     else:
         print(json.dumps([]))
 
-def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha=None, hora=None, rol=None, motivo=None):
+def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora, rol, motivo):
     try:
         # Zona horaria de México
         mx_zone = timezone('America/Mexico_City')
@@ -133,7 +133,7 @@ def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha=None, hora=N
         now = datetime.now(mx_zone)
         if fecha and hora:
             # Convertir la fecha y hora proporcionadas a la zona horaria de México
-            naive_datetime = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M")
+            naive_datetime = datetime.strptime(f"{fecha} {hora}", "%Y-%m-%d %H:%M:%S")
             local_dt = mx_zone.localize(naive_datetime, is_dst=None)
             now = local_dt.astimezone(mx_zone)
 
