@@ -701,23 +701,34 @@ async function handlePhotoUpload1(chatId, msg, tipo, descripcion = '') {
 }
 
 async function manageEquipmentIssues2(chatId) {
-  await bot.sendMessage(chatId, "Por favor, describa el problema del equipo.🔨");
-      bot.once('message', async descMsg => {
-        if (descMsg.text) {
-          await bot.sendMessage(chatId, "Ahora, por favor suba una foto del equipo dañado.📸📸");
-          bot.once('photo', async (msg) => {
-            const tipo = 'equipo dañados';
-            const descripcion = descMsg.text;
-            await handlePhotoUpload1(chatId, msg, tipo, descripcion);
-            await bot.sendMessage(chatId, "Reporte de equipo dañado completado. 😀");
-            handleAdditionalOptions1(chatId);
-            
+  // Solicitar al usuario que escriba el nombre del equipo dañado
+  await bot.sendMessage(chatId, "Por favor, escriba el nombre del equipo dañado.");
+
+  // Esperar a que el usuario proporcione el nombre del equipo
+  bot.once('message', async tipoMsg => {
+      if (tipoMsg.text) {
+          const tipo = tipoMsg.text; // Usar el texto proporcionado por el usuario como 'tipo'
+
+          // Solicitar la descripción del problema
+          await bot.sendMessage(chatId, "Describa el problema del equipo.🔨");
+          bot.once('message', async descMsg => {
+              if (descMsg.text) {
+                  // Solicitar una foto del equipo dañado
+                  await bot.sendMessage(chatId, "Ahora, por favor suba una foto del equipo dañado.📸📸");
+                  bot.once('photo', async (msg) => {
+                      const descripcion = descMsg.text;
+                      await handlePhotoUpload1(chatId, msg, tipo, descripcion);
+                      await bot.sendMessage(chatId, "Reporte de equipo dañado completado. 😀");
+                      handleAdditionalOptions1(chatId);
+                  });
+              } else {
+                  await bot.sendMessage(chatId, "Por favor proporcione una descripción del problema.");
+              }
           });
-        } else {
-          await bot.sendMessage(chatId, "Por favor proporcione una descripción del problema.");
-        }
-      });
-  
+      } else {
+          await bot.sendMessage(chatId, "Por favor, escriba un nombre válido para el equipo.");
+      }
+  });
 }
 //no se reportaron equipos daniados!!!!!!!
 bot.onText(/\/reporte_danio/, (msg) => {
