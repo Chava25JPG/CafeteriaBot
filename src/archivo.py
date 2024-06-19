@@ -379,7 +379,7 @@ if __name__ == '__main__':
             subir_foto_a_hoja(sheet_id, file_url, tipo, fecha, descripcion)
 
         elif command == 'subir_reporte_danio':
-            folder_id = sys.arg[2]
+            folder_id = sys.argv[2]
             fecha = sys.argv[3]
             file_url = sys.argv[4]
             tipo = sys.argv[5]
