@@ -315,6 +315,43 @@ def subir_foto_a_hoja(sheet_id, file_url, tipo, fecha, descripcion=''):
 
 
 
+
+def obtener_o_crear_archivo_historial(folder_id):
+    """Busca o crea un archivo de historial de equipos dañados en la carpeta especificada."""
+    historial_file_name = "Historial Equipos"
+    # Buscar el archivo en la carpeta especificada
+    query = f"name='{historial_file_name}' and '{folder_id}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and trashed = false"
+    response = drive_service.files().list(q=query).execute()
+    files = response.get('files', [])
+    
+    if not files:
+        file_metadata = {
+            'name': historial_file_name,
+            'mimeType': 'application/vnd.google-apps.spreadsheet',
+            'parents': [folder_id]  # Asegurar que el archivo se cree en la carpeta correcta
+        }
+        file = drive_service.files().create(body=file_metadata, fields='id').execute()
+        print(f"Archivo creado: {file['id']} con nombre {historial_file_name}")
+        return file.get('id')
+    return files[0]['id']
+
+def subir_reporte_danio(folder_id, fecha, file_url, tipo, descripcion):
+    """Sube la información de un equipo dañado al archivo 'Historial Equipos'."""
+    historial_sheet_id = obtener_o_crear_archivo_historial(folder_id)
+    hoja_id = obtener_o_crear_hoja(historial_sheet_id, "Reportes de Equipos Dañados")
+    next_row = encontrar_siguiente_fila_vacia(historial_sheet_id, "Reportes de Equipos Dañados")
+
+    # Insertar los datos con la fecha de reporte
+    values = [
+        [fecha, tipo, f'=IMAGE("{file_url}")', descripcion, 'Sin resolver']
+    ]
+    range_name = f"Reportes de Equipos Dañados!A{next_row}:E{next_row}"
+    body = {'values': values}
+    sheets_service.spreadsheets().values().update(
+        spreadsheetId=historial_sheet_id, range=range_name, valueInputOption='USER_ENTERED', body=body).execute()
+    print(f"Reporte de daño subido a la hoja con ID {hoja_id} en la fila {next_row}.")
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         command = sys.argv[1]
@@ -340,3 +377,12 @@ if __name__ == '__main__':
             sheet_id = obtener_o_crear_archivo_dia_especifico(fecha)
             hoja_id = obtener_o_crear_hoja(sheet_id, "Inicio")
             subir_foto_a_hoja(sheet_id, file_url, tipo, fecha, descripcion)
+
+        elif command == 'subir_reporte_danio':
+            folder_id = sys.arg[2]
+            fecha = sys.argv[3]
+            file_url = sys.argv[4]
+            tipo = sys.argv[5]
+            descripcion = sys.argv[6]
+            
+            subir_reporte_danio(folder_id, fecha,file_url, tipo, descripcion)

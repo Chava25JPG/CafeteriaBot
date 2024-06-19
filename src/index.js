@@ -657,6 +657,44 @@ function subirFoto(folder_id,fecha ,file_url, tipo, descripcion) {
   });
 }
 
+function subirReporteDanio(folder_id, fecha, file_url, tipo, descripcion) {
+  return new Promise((resolve, reject) => {
+    const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_reporte_danio', folder_id, fecha, file_url, tipo, descripcion]);
+
+    pythonProcess.stdout.on('data', (data) => {
+      console.log(`Python Output: ${data.toString()}`);
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      console.error(`Python Error: ${data.toString()}`);
+      reject(new Error(`Python Error: ${data.toString()}`));
+    });
+
+    pythonProcess.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Python script exited with code ${code}`));
+      }
+    });
+  });
+}
+
+async function handlePhotoUpload1(chatId, msg, tipo, descripcion = '') {
+  if (msg.photo) {
+    const chatId = msg.chat.id;
+    const photo = msg.photo.pop();
+    const file_id = photo.file_id;
+    const file_path = await getFileLink(file_id);
+    const now = moment().tz('America/Mexico_City');
+    const fecha = now.format('YYYY-MM-DD');
+    await subirReporteDanio('1pS-L0xpDzIeuh9e0XliVhzjZUa7mYkvt', fecha, file_path, tipo, descripcion);
+    await bot.sendMessage(chatId, "Foto subida exitosamente a la hoja de cálculo.");
+  } else {
+    await bot.sendMessage(chatId, "Por favor envíe una foto.");
+  }
+}
+
 async function manageEquipmentIssues2(chatId) {
   await bot.sendMessage(chatId, "Por favor, describa el problema del equipo.🔨");
       bot.once('message', async descMsg => {
@@ -665,7 +703,7 @@ async function manageEquipmentIssues2(chatId) {
           bot.once('photo', async (msg) => {
             const tipo = 'equipo dañados';
             const descripcion = descMsg.text;
-            await handlePhotoUpload(chatId, msg, tipo, descripcion);
+            await handlePhotoUpload1(chatId, msg, tipo, descripcion);
             await bot.sendMessage(chatId, "Reporte de equipo dañado completado. 😀");
             handleAdditionalOptions1(chatId);
             
