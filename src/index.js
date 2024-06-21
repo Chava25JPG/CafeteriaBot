@@ -392,7 +392,7 @@ async function showTaskMenu(chatId) {
     const text = msg.text;
     if (text === 'Terminar') {
       await bot.sendMessage(chatId, "Registro completo.");
-      const groupId = 1878617110;  
+      const groupId = -4224013774;  
 
       //mio
       //const groupId = 1503769017;
