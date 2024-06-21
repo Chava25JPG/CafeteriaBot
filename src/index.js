@@ -392,7 +392,7 @@ async function showTaskMenu(chatId) {
     const text = msg.text;
     if (text === 'Terminar') {
       await bot.sendMessage(chatId, "Registro completo.");
-      const groupId = -4232487697;  
+      const groupId = -2207878165;  
       sendSheetLinkToTelegramGroup(groupId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
       delete taskCompletion[chatId]; // Limpia el estado al terminar
