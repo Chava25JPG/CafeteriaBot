@@ -846,23 +846,9 @@ async function handleAdditionalOptions1(chatId) {
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
+  console.log(chatId);
 
-  // Asegúrate de que esto es en un grupo o supergrupo
-  if (msg.chat.type === 'group' || msg.chat.type === 'supergroup') {
-      try {
-          const admins = await getGroupAdmins(chatId);
-          let response = "Administradores del grupo:\n";
-          admins.forEach(admin => {
-              response += `ID: ${admin.id}, Nombre: ${admin.name}\n`;
-          });
-          bot.sendMessage(chatId, response);
-      } catch (error) {
-          console.error('Error:', error);
-          bot.sendMessage(chatId, "Ocurrió un error al intentar obtener los administradores del grupo.");
-      }
-  } else {
-      bot.sendMessage(chatId, "Este comando solo funciona en grupos.");
-  }
+  bot.sendMessage(chatId, "esto no va a estar en el bot final");
 });
 
 
