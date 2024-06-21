@@ -392,10 +392,10 @@ async function showTaskMenu(chatId) {
     const text = msg.text;
     if (text === 'Terminar') {
       await bot.sendMessage(chatId, "Registro completo.");
-      //const groupId = 1878617110;  
+      const groupId = 1878617110;  
 
       //mio
-      const groupId = 1503769017;
+      //const groupId = 1503769017;
       sendSheetLinkToTelegramGroup(groupId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
       delete taskCompletion[chatId]; // Limpia el estado al terminar
@@ -411,38 +411,30 @@ async function showTaskMenu(chatId) {
   });
 }
 
-async function sendSheetLinkToTelegramGroup(groupId) {
+async function sendSheetLinkToTelegramGroup(chatId) {
+  
+   folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
+   const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
 
-  bot.sendMessage(groupId, "le aparece este mensaje?")
-  .then(() => console.log("Mensaje enviado con éxito"))
-  .catch(error => {
-    console.error("Error completo:", error);
-    console.error("Código de error:", error.code);
-    console.error("Descripción del error:", error.description);
+   let dataOutput = '';
+   let errorOutput = '';
+   pythonProcess.stdout.on('data', (data) => {
+       dataOutput += data.toString();
+   });
+
+   pythonProcess.stderr.on('data', (data) => {
+       errorOutput += data.toString();
+   });
+
+   pythonProcess.on('close', (code) => {
+       if (code === 0) {
+           console.log(`Python Output: ${dataOutput}`);
+           bot.sendMessage(chatId, `Aquí está el enlace del archivo de el reporte Matutino: ${dataOutput.trim()}`).catch(console.error);
+       } else {
+           console.error(`Python Error: ${errorOutput}`);
+           bot.sendMessage(chatId, "Hubo un error al obtener el archivo Matutino").catch(console.error);
+       }
   });
-  // folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
-  // const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
-
-  // let dataOutput = '';
-  // let errorOutput = '';
-
-  // pythonProcess.stdout.on('data', (data) => {
-  //     dataOutput += data.toString();
-  // });
-
-  // pythonProcess.stderr.on('data', (data) => {
-  //     errorOutput += data.toString();
-  // });
-
-  // pythonProcess.on('close', (code) => {
-  //     if (code === 0) {
-  //         console.log(`Python Output: ${dataOutput}`);
-  //         bot.sendMessage(chatId, `Aquí está el enlace del archivo de el reporte Matutino: ${dataOutput.trim()}`).catch(console.error);
-  //     } else {
-  //         console.error(`Python Error: ${errorOutput}`);
-  //         bot.sendMessage(chatId, "Hubo un error al obtener el archivo Matutino").catch(console.error);
-  //     }
-  // });
 }
 
 async function handleTask(task, chatId) {
