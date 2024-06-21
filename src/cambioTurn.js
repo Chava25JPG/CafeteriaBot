@@ -190,27 +190,35 @@ async function getFileLink(fileId) {
   
   async function showTaskMenu1(chatId) {
     await bot.sendMessage(chatId, "¿Sale servicio?", {
-      reply_markup: {
-        keyboard: [['Sí ✅', 'No ⛔']],
-        one_time_keyboard: true,
-        resize_keyboard: true
-      }
+        reply_markup: {
+            keyboard: [['Sí ✅', 'No ⛔']],
+            one_time_keyboard: true,
+            resize_keyboard: true
+        }
     });
-  
-    bot.once('message', async msg => {
-      const sale_servicio = msg.text === 'Sí ✅' ? 'Sí sale' : 'No sale';
-      let message = `SUC X ${sale_servicio}\nllegó:\n`;
-      asistencia.llegaron.forEach(emp => {
-        message += `${emp.nombre}-----------------${emp.rol}\n`;
-      });
-      message += 'Falta o Retardo\n';
-      asistencia.faltas_retardos.forEach(emp => {
-        message += `${emp.nombre}----${emp.tipo}\n`;
-      });
-      await bot.sendMessage(chatId, message);
-      resetAsistencia(); // Reinicia la lista de asistencia para el próximo uso
+
+    return new Promise((resolve, reject) => {
+        bot.once('message', async msg => {
+            try {
+                const sale_servicio = msg.text === 'Sí ✅' ? 'Sí sale' : 'No sale';
+                let message = `SUC X ${sale_servicio}\nllegó:\n`;
+                asistencia.llegaron.forEach(emp => {
+                    message += `${emp.nombre}-----------------${emp.rol}\n`;
+                });
+                message += 'Falta o Retardo\n';
+                asistencia.faltas_retardos.forEach(emp => {
+                    message += `${emp.nombre}----${emp.tipo}\n`;
+                });
+                await bot.sendMessage(chatId, message);
+                resetAsistencia(); // Reinicia la lista de asistencia para el próximo uso
+                resolve(); // Resuelve la promesa después de enviar el mensaje
+            } catch (error) {
+                reject(error); // Rechaza la promesa si hay un error
+            }
+        });
     });
-  }
+}
+
   
   function resetAsistencia() {
     asistencia = { llegaron: [], faltas_retardos: [] };
