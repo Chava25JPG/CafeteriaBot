@@ -189,7 +189,7 @@ async function getFileLink(fileId) {
   }
   
   async function showTaskMenu1(chatId) {
-    await bot.sendMessage(chatId, "¿Sale servicio?", {
+    await bot.sendMessage(chatId, "¿Sale el servicio?", {
         reply_markup: {
             keyboard: [['Sí ✅', 'No ⛔']],
             one_time_keyboard: true,
@@ -200,7 +200,7 @@ async function getFileLink(fileId) {
     return new Promise((resolve, reject) => {
         bot.once('message', async msg => {
             try {
-                const sale_servicio = msg.text === 'Sí ✅' ? 'Sí sale' : 'No sale';
+                const sale_servicio = msg.text === 'Sí ✅' ? '✅Sí sale✅' : '⛔⚠No sale⚠⛔';
                 let message = `SUC X ${sale_servicio}\nllegó:\n`;
                 asistencia.llegaron.forEach(emp => {
                     message += `${emp.nombre}-----------------${emp.rol}\n`;
@@ -209,7 +209,13 @@ async function getFileLink(fileId) {
                 asistencia.faltas_retardos.forEach(emp => {
                     message += `${emp.nombre}----${emp.tipo}\n`;
                 });
-                await bot.sendMessage(chatId, message);
+                message += '-------------------'; // Para separar secciones si es necesario
+
+                groupChatId = -4224013774;
+
+                // Envía el mensaje al grupo especificado
+                await bot.sendMessage(groupChatId, message);
+
                 resetAsistencia(); // Reinicia la lista de asistencia para el próximo uso
                 resolve(); // Resuelve la promesa después de enviar el mensaje
             } catch (error) {
