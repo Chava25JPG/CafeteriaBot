@@ -392,7 +392,7 @@ async function showTaskMenu(chatId) {
     const text = msg.text;
     if (text === 'Terminar') {
       await bot.sendMessage(chatId, "Registro completo.");
-      const groupId = '-2207878165';  
+      const groupId = 1878617110;  
       sendSheetLinkToTelegramGroup(groupId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
       delete taskCompletion[chatId]; // Limpia el estado al terminar
@@ -410,7 +410,7 @@ async function showTaskMenu(chatId) {
 
 async function sendSheetLinkToTelegramGroup(groupId) {
 
-  bot.sendMessage(groupId, "Tu mensaje")
+  bot.sendMessage(groupId, "le aparece este mensaje?")
   .then(() => console.log("Mensaje enviado con éxito"))
   .catch(error => {
     console.error("Error completo:", error);
