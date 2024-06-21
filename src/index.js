@@ -408,7 +408,7 @@ async function showTaskMenu(chatId) {
   });
 }
 
-async function sendSheetLinkToTelegramGroup(chatId) {
+async function sendSheetLinkToTelegramGroup(groupId) {
 
   bot.sendMessage(groupId, "Tu mensaje")
   .then(() => console.log("Mensaje enviado con éxito"))
