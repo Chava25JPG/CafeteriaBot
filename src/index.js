@@ -409,11 +409,12 @@ async function showTaskMenu(chatId) {
 
 async function sendSheetLinkToTelegramGroup(chatId) {
 
-  bot.sendMessage(chatId, "Tu mensaje aquí")
+  bot.sendMessage(groupId, "Tu mensaje")
   .then(() => console.log("Mensaje enviado con éxito"))
   .catch(error => {
-    console.error("Error al enviar mensaje:", error.code, error.description);
-    // Aquí puedes añadir lógica adicional para manejar el error
+    console.error("Error completo:", error);
+    console.error("Código de error:", error.code);
+    console.error("Descripción del error:", error.description);
   });
   // folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
   // const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
