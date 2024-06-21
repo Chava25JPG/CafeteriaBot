@@ -167,7 +167,9 @@ async function getFileLink(fileId) {
       if (msg.text === 'Marcar falta⛔' || msg.text === 'Marcar retardo⛔🕐') {
         await handleFaltaRetardo(chatId, msg.text);
       } else if (msg.text === 'Finalizar registro✨') {
+        await showTaskMenu1(chatId);
         await showTaskMenu(chatId);
+        
       }
     });
   }
@@ -186,7 +188,7 @@ async function getFileLink(fileId) {
     });
   }
   
-  async function showTaskMenu(chatId) {
+  async function showTaskMenu1(chatId) {
     await bot.sendMessage(chatId, "¿Sale servicio?", {
       reply_markup: {
         keyboard: [['Sí ✅', 'No ⛔']],
