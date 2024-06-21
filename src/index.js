@@ -8,7 +8,7 @@ const { google } = require('googleapis');
 const moment = require('moment-timezone');
 const bot = require('./confBot.js')
 const { handleCambioCommand } = require('./cambioTurn.js');
-const groupId = '-4232487697';  
+
 const { askDesmonte } = require('./Cierre.js')
 const { getGroupAdmins } = require('./funciones.js');
 const axios = require('axios');  // Asegúrate de tener Axios instalado
@@ -392,6 +392,7 @@ async function showTaskMenu(chatId) {
     const text = msg.text;
     if (text === 'Terminar') {
       await bot.sendMessage(chatId, "Registro completo.");
+      const groupId = -4232487697;  
       sendSheetLinkToTelegramGroup(groupId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
       delete taskCompletion[chatId]; // Limpia el estado al terminar
