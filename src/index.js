@@ -10,6 +10,7 @@ const bot = require('./confBot.js')
 const { handleCambioCommand } = require('./cambioTurn.js');
 const groupId = -4238334308;
 const { askDesmonte } = require('./Cierre.js')
+const { getGroupAdmins } = require('./funciones.js');
 const axios = require('axios');  // Asegúrate de tener Axios instalado
 let dateFormat;
 import('dateformat').then((module) => {
@@ -102,11 +103,6 @@ async function deleteExistingFile(folderId, filename) {
 
 
 
-bot.onText(/\/start/, (msg) => {
-    const chatId = msg.chat.id;
-    console.log("Usuario interactuando con /start:", chatId);
-    bot.sendMessage(chatId, "Hola, bienvenido al bot. ya puede subir los archivos, los archivos se renombran automaticamente dependiendo el dia de la semana");
-});
 
 bot.on('message', (msg) => {
   const chatId = msg.chat.id;
@@ -214,6 +210,9 @@ function obtenerEmpleados() {
     });
   });
 }
+
+
+
 
 function registrarAsistencia(empleado, fecha, hora, rol, motivo) {
   return new Promise((resolve, reject) => {
@@ -833,6 +832,29 @@ async function handleAdditionalOptions1(chatId) {
       }
   });
 }
+
+
+
+bot.onText(/\/start/, async (msg) => {
+  const chatId = msg.chat.id;
+
+  // Asegúrate de que esto es en un grupo o supergrupo
+  if (msg.chat.type === 'group' || msg.chat.type === 'supergroup') {
+      try {
+          const admins = await getGroupAdmins(chatId);
+          let response = "Administradores del grupo:\n";
+          admins.forEach(admin => {
+              response += `ID: ${admin.id}, Nombre: ${admin.name}\n`;
+          });
+          bot.sendMessage(chatId, response);
+      } catch (error) {
+          console.error('Error:', error);
+          bot.sendMessage(chatId, "Ocurrió un error al intentar obtener los administradores del grupo.");
+      }
+  } else {
+      bot.sendMessage(chatId, "Este comando solo funciona en grupos.");
+  }
+});
 
 
 
