@@ -87,20 +87,24 @@ async function getFileLink(fileId) {
   
   
   
+  let asistencia = {
+    llegaron: [],
+    faltas_retardos: []
+  };
+  
   async function handleCambioCommand(chatId) {
-    
-    const employees = await obtenerEmpleados();
+    const employees = await obtenerEmpleados(); // Asumimos que esta función existe
     if (!employees || employees.length === 0) {
       await bot.sendMessage(chatId, "No se encontraron empleados.");
       return;
     }
   
-    // Start the process to choose employee and role
+    // Iniciar el proceso de elegir empleado y rol
     await chooseEmployee(chatId, employees);
   }
   
   async function chooseEmployee(chatId, employees) {
-    await bot.sendMessage(chatId, "Quien en turno? 👤:", {
+    await bot.sendMessage(chatId, "¿Quién está en turno? 👤:", {
       reply_markup: {
         keyboard: employees.map(name => [{ text: name }]),
         one_time_keyboard: true,
@@ -123,17 +127,14 @@ async function getFileLink(fileId) {
   
     bot.once('message', async msg => {
       const rol = msg.text;
-      const now = moment().tz('America/Mexico_City');
-      const fecha = now.format('YYYY-MM-DD');
-      const hora = now.format('HH:mm:ss');
-      const result = await registrarAsistencia(empleado, fecha, hora, rol);
+      asistencia.llegaron.push({ nombre: empleado, rol: rol });
       await bot.sendMessage(chatId, `Asistencia registrada para ${empleado} como ${rol}.`);
       askForMore(chatId);
     });
   }
   
   async function askForMore(chatId) {
-    await bot.sendMessage(chatId, "¿Desea registrar a otro empleado👥?", {
+    await bot.sendMessage(chatId, "¿Desea registrar a otro empleado? 👥", {
       reply_markup: {
         keyboard: [['Sí ✅', 'No ⛔']],
         one_time_keyboard: true,
@@ -143,7 +144,6 @@ async function getFileLink(fileId) {
   
     bot.once('message', msg => {
       if (msg.text === 'Sí ✅') {
-        const chatId = msg.chat.id;
         handleCambioCommand(chatId);
       } else {
         handleAdditionalOptions(chatId);
@@ -151,35 +151,68 @@ async function getFileLink(fileId) {
     });
   }
   
-  
-async function handleAdditionalOptions(chatId) {
-  await bot.sendMessage(chatId, "Seleccione una opción:", {
+  async function handleAdditionalOptions(chatId) {
+    await bot.sendMessage(chatId, "Seleccione una opción:", {
       reply_markup: {
-          keyboard: [
-              ['Marcar falta⛔', 'Marcar retardo⛔🕐'],
-              ['Finalizar registro✨']
-          ],
-          one_time_keyboard: true,
-          resize_keyboard: true
+        keyboard: [
+          ['Marcar falta⛔', 'Marcar retardo⛔🕐'],
+          ['Finalizar registro✨']
+        ],
+        one_time_keyboard: true,
+        resize_keyboard: true
       }
-  });
-
-  bot.once('message', async msg => {
-      if (msg.text) {
-          switch (msg.text.toLowerCase()) {
-              case 'marcar falta⛔':
-              case 'marcar retardo⛔🕐':
-                  await handleFaltaRetardo(chatId, msg.text);
-                  break;
-              case 'finalizar registro✨':
-                  await showTaskMenu(chatId);
-                  break;
-          }
-      } else {
-          await bot.sendMessage(chatId, "Por favor, envíe un mensaje de texto.");
+    });
+  
+    bot.once('message', async msg => {
+      if (msg.text === 'Marcar falta⛔' || msg.text === 'Marcar retardo⛔🕐') {
+        await handleFaltaRetardo(chatId, msg.text);
+      } else if (msg.text === 'Finalizar registro✨') {
+        await showTaskMenu(chatId);
       }
-  });
-}
+    });
+  }
+  
+  async function handleFaltaRetardo(chatId, tipo) {
+    const falta_o_retardo = tipo.includes('falta') ? 'Falta' : 'Retardo';
+    await bot.sendMessage(chatId, "Indique el nombre del empleado:", {
+      reply_markup: {
+        force_reply: true
+      }
+    });
+  
+    bot.once('message', async msg => {
+      asistencia.faltas_retardos.push({ nombre: msg.text, tipo: falta_o_retardo });
+      askForMore(chatId);
+    });
+  }
+  
+  async function showTaskMenu(chatId) {
+    await bot.sendMessage(chatId, "¿Sale servicio?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    bot.once('message', async msg => {
+      const sale_servicio = msg.text === 'Sí ✅' ? 'Sí sale' : 'No sale';
+      let message = `SUC X ${sale_servicio}\nllegó:\n`;
+      asistencia.llegaron.forEach(emp => {
+        message += `${emp.nombre}-----------------${emp.rol}\n`;
+      });
+      message += 'Falta o Retardo\n';
+      asistencia.faltas_retardos.forEach(emp => {
+        message += `${emp.nombre}----${emp.tipo}\n`;
+      });
+      await bot.sendMessage(chatId, message);
+      resetAsistencia(); // Reinicia la lista de asistencia para el próximo uso
+    });
+  }
+  
+  function resetAsistencia() {
+    asistencia = { llegaron: [], faltas_retardos: [] };
+  }
 
 const taskCompletion = {};
 
@@ -222,7 +255,9 @@ async function showTaskMenu(chatId) {
     const text = msg.text;
     if (text === 'Terminar') {
       await bot.sendMessage(chatId, "Registro completo.");
-      sendSheetLinkToTelegramGroup(chatId);
+      const groupId = -4224013774;  
+
+      sendSheetLinkToTelegramGroup(groupId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
       delete taskCompletion[chatId]; // Limpia el estado al terminar
       return;
