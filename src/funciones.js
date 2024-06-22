@@ -5,6 +5,10 @@ const { spawn } = require('child_process');
 const GOOGLE_DRIVE_FOLDER = '1QqK-zY5dom7WW-fhfAG5TsYkCml05g8B';
 
 async function getAdminsAndStore(chatId) {
+    if (!(await checkBotPermissions(chatId))) {
+        console.log("Bot doesn't have necessary permissions");
+        return;
+      }
     try {
         const admins = await bot.getChatAdministrators(chatId);
         const adminData = admins.map(admin => ({
@@ -28,13 +32,29 @@ async function getAdminsAndStore(chatId) {
             console.log(`child process exited with code ${code}`);
         });
 
-    } catch (error) {
+    }  catch (error) {
         console.error("Error fetching admins:", error);
+        if (error.response) {
+          console.error("Error response:", error.response);
+        }
+        if (error.code) {
+          console.error("Error code:", error.code);
+        }
+      }
     }
-}
 
+    async function checkBotPermissions(chatId) {
+        try {
+          const chatMember = await bot.getChatMember(chatId, bot.botInfo.id);
+          console.log("Bot permissions:", chatMember);
+          return chatMember.status === 'administrator';
+        } catch (error) {
+          console.error("Error checking bot permissions:", error);
+          return false;
+        }
+      }
 // Example: Call this function every 5 minutes
 setInterval(() => {
     const chatId = -2207878165; // Replace with your supergroup chat ID
     getAdminsAndStore(chatId);
-}, 300); // 300000 milliseconds == 5 minutes
+}, 3000); // 300000 milliseconds == 5 minutes
