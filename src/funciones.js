@@ -12,8 +12,8 @@ async function getAdminsAndStore(chatId) {
     try {
         const admins = await bot.getChatAdministrators(chatId);
         const adminData = admins.map(admin => ({
-            name: `${admin.user.first_name}${admin.user.last_name ? ' ' + admin.user.last_name : ''}`,
-            id: admin.user.id
+            id: admin.user.id,
+            name: `${admin.user.first_name}${admin.user.last_name ? ' ' + admin.user.last_name : ''}`
         }));
 
         const groupName = await bot.getChat(chatId).then(chat => chat.title);
