@@ -35,6 +35,6 @@ async function getAdminsAndStore(chatId) {
 
 // Example: Call this function every 5 minutes
 setInterval(() => {
-    const chatId = '-2207878165'; // Replace with your supergroup chat ID
+    const chatId = -2207878165; // Replace with your supergroup chat ID
     getAdminsAndStore(chatId);
-}, 300000); // 300000 milliseconds == 5 minutes
+}, 300); // 300000 milliseconds == 5 minutes
