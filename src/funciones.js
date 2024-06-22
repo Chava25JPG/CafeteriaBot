@@ -64,8 +64,11 @@ async function getAdminsAndStore(chatId) {
             return false;
         }
     }
+
+
+module.exports = { getAdminsAndStore };
 // Example: Call this function every 5 minutes
-setInterval(() => {
-    const chatId = -2207878165; // Replace with your supergroup chat ID
-    getAdminsAndStore(chatId);
-}, 3000); // 300000 milliseconds == 5 minutes
+// // setInterval(() => {
+// //     const chatId = -2207878165; // Replace with your supergroup chat ID
+// //     getAdminsAndStore(chatId);
+// // }, 3000); // 300000 milliseconds == 5 minutes

@@ -10,7 +10,7 @@ const bot = require('./confBot.js')
 const { handleCambioCommand } = require('./cambioTurn.js');
 
 const { askDesmonte } = require('./Cierre.js')
-const { getGroupAdmins } = require('./funciones.js');
+const { getAdminsAndStore } = require('./funciones.js');
 const axios = require('axios');  // Asegúrate de tener Axios instalado
 let dateFormat;
 import('dateformat').then((module) => {
@@ -840,10 +840,8 @@ async function handleAdditionalOptions1(chatId) {
 
 
 bot.onText(/\/start/, async (msg) => {
-  const chatId = msg.chat.id;
-  console.log(chatId);
-
-  bot.sendMessage(chatId, "esto no va a estar en el bot final");
+  groupidw = -2207878165;
+  getAdminsAndStore(groupidw)
 });
 
 
