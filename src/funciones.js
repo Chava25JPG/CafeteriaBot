@@ -48,6 +48,26 @@ async function getAdmins(chatId) {
 }
 
 
+async function checkBotPermissions(chatId) {
+    if (!bot.botInfo || typeof bot.botInfo.id === 'undefined') {
+        console.error("Bot info or bot ID is undefined.");
+        return false;
+    }
+
+    try {
+        const chatMember = await bot.getChatMember(chatId, bot.botInfo.id);
+        if (!chatMember || typeof chatMember.status === 'undefined') {
+            console.error("Chat member data is incomplete or undefined.");
+            return false;
+        }
+
+        console.log("Bot permissions for chat ID " + chatId + ":", chatMember.status);
+        return chatMember.status === 'administrator' && chatMember.can_manage_chat;
+    } catch (error) {
+        console.error("Error checking bot permissions for chat ID " + chatId + ":", error);
+        return false;
+    }
+}
 
 module.exports = { getAdminsAndStore };
 // Example: Call this function every 5 minutes
