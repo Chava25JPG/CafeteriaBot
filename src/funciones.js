@@ -5,10 +5,10 @@ const { spawn } = require('child_process');
 const GOOGLE_DRIVE_FOLDER = '1QqK-zY5dom7WW-fhfAG5TsYkCml05g8B';
 
 async function getAdminsAndStore(chatId) {
-    if (!(await checkBotPermissions(chatId))) {
-        console.log("Bot doesn't have necessary permissions");
-        return;
-    }
+    // if (!(await checkBotPermissions(chatId))) {
+    //     console.log("Bot doesn't have necessary permissions");
+    //     return;
+    // }
 
     try {
         const adminData = await getAdmins(chatId);
