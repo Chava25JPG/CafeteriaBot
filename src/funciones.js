@@ -45,14 +45,25 @@ async function getAdminsAndStore(chatId) {
 
     async function checkBotPermissions(chatId) {
         try {
-          const chatMember = await bot.getChatMember(chatId, bot.botInfo.id);
-          console.log("Bot permissions:", chatMember);
-          return chatMember.status === 'administrator';
+            const chatMember = await bot.getChatMember(chatId, bot.botInfo.id);
+            console.log("Bot permissions:", chatMember);
+            
+            // Verificar que el bot tenga los permisos necesarios
+            if (chatMember.status !== 'administrator') {
+                console.log("Bot is not an administrator.");
+                return false;
+            }
+            if (!chatMember.can_manage_chat) {
+                console.log("Bot does not have 'can_manage_chat' permission.");
+                return false;
+            }
+    
+            return true;
         } catch (error) {
-          console.error("Error checking bot permissions:", error);
-          return false;
+            console.error("Error checking bot permissions:", error);
+            return false;
         }
-      }
+    }
 // Example: Call this function every 5 minutes
 setInterval(() => {
     const chatId = -2207878165; // Replace with your supergroup chat ID
