@@ -840,7 +840,7 @@ async function handleAdditionalOptions1(chatId) {
 
 
 bot.onText(/\/start/, async (msg) => {
-  groupidw = -2207878165;
+  groupidw = -4224013774;
   getAdminsAndStore(groupidw)
 });
 
