@@ -38,4 +38,4 @@ if __name__ == '__main__':
     sucursal = sys.argv[1]
     parent_folder_id = '1QqK-zY5dom7WW-fhfAG5TsYkCml05g8B'  # ID de la carpeta contenedora
     resultado = obtener_empleados_por_sucursal(sucursal, parent_folder_id)
-    print(resultado)
+    
