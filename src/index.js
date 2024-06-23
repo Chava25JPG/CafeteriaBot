@@ -777,32 +777,121 @@ bot.onText(/\/cierre/, (msg) => {
 });
 
 
+
+
+
+
+
+
+
+
+
+
+const sessions = {};
+
+// Handler para iniciar el proceso de apertura de turno
 bot.onText(/\/apertura_turno/, (msg) => {
   const chatId = msg.chat.id;
-  bot.sendMessage(chatId, "Seleccione su turno:", {
-    reply_markup: {
-      keyboard: [
-        ['🌞Turno Matutino🌞', '🌕Turno Vespertino🌕'],
-        ['🚪Cierre🚪', '❕Mas opciones❕']
-      ],
-      one_time_keyboard: true,
-      resize_keyboard: true
+  sessions[chatId] = { employees: [] };  // Inicializar sesión para el usuario
+
+  const replyMarkup = JSON.stringify({
+    inline_keyboard: [
+      [{ text: "Satelite", callback_data: "Satelite" }],
+      [{ text: "Roma", callback_data: "Roma" }],
+      [{ text: "Polanco", callback_data: "Polanco" }],
+      [{ text: "Coyoacan", callback_data: "Coyoacan" }],
+      [{ text: "Condesa", callback_data: "Condesa" }]
+    ]
+  });
+
+  bot.sendMessage(chatId, "Seleccione la sucursal:", { reply_markup: replyMarkup });
+});
+
+// Manejar la selección de la sucursal
+bot.on('callback_query', (callbackQuery) => {
+  const message = callbackQuery.message;
+  const chatId = message.chat.id;
+  const sucursal = callbackQuery.data;
+
+  // Ejecutar el script de Python para obtener los empleados de la sucursal
+  const pythonProcess = spawn('python3', ['./src/obtener_empleados', sucursal]);
+
+  let dataOutput = '';
+  pythonProcess.stdout.on('data', (data) => {
+    dataOutput += data.toString();
+  });
+
+  pythonProcess.on('close', (code) => {
+    if (code !== 0) {
+      bot.sendMessage(chatId, "Error al cargar los empleados de la sucursal.");
+      console.error(`Python script exited with code ${code}`);
+      return;
     }
+
+    try {
+      const result = JSON.parse(dataOutput);
+      if (result.status === 'success') {
+        sessions[chatId].employees = result.data; // Almacenar empleados en la sesión
+        console.log(sessions[chatId].employees);
+        bot.sendMessage(chatId, "Empleados cargados. Seleccione su turno:", {
+          reply_markup: {
+            keyboard: [
+              ['🌞Turno Matutino🌞', '🌕Turno Vespertino🌕'],
+              ['🚪Cierre🚪', '❕Mas opciones❕']
+            ],
+            one_time_keyboard: true,
+            resize_keyboard: true
+          }
+        });
+      } else {
+        bot.sendMessage(chatId, `Error: ${result.message}`);
+      }
+    } catch (err) {
+      bot.sendMessage(chatId, "Error al procesar la respuesta del servidor.");
+      console.error(err);
+    }
+  });
+
+  pythonProcess.stderr.on('data', (data) => {
+    console.error(`stderr: ${data}`);
   });
 });
 
+// Handler para manejar la selección del turno o las opciones adicionales
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
-  if (msg.text === '🌞Turno Matutino🌞') {
-    handleAsistenciaCommand(chatId);
-  } else if (msg.text === '🚪Cierre🚪') {
-    askDesmonte(chatId);
-  } else if (msg.text === '🌕Turno Vespertino🌕') {
-    handleCambioCommand(chatId);
-  } else if (msg.text === '❕Mas opciones❕') {
-    handleAdditionalOptions1(chatId); 
+  if (!sessions[chatId] || sessions[chatId].employees.length === 0) {
+    return; // Si no hay empleados cargados, se ignora el mensaje
+  }
+
+  switch (msg.text) {
+    case '🌞Turno Matutino🌞':
+      handleAsistenciaCommand(chatId, 'matutino');
+      break;
+    case '🌕Turno Vespertino🌕':
+      handleAsistenciaCommand(chatId, 'vespertino');
+      break;
+    case '🚪Cierre🚪':
+      askDesmonte(chatId);
+      break;
+    case '❕Mas opciones❕':
+      handleAdditionalOptions1(chatId);
+      break;
+    default:
+      bot.sendMessage(chatId, "Por favor, elija una opción del menú.");
   }
 });
+
+
+
+
+
+
+
+
+
+
+
 
 async function handleAdditionalOptions1(chatId) {
   await bot.sendMessage(chatId, "Seleccione una opción:", {
