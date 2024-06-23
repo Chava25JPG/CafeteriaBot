@@ -816,18 +816,29 @@ bot.on('callback_query', (callbackQuery) => {
     dataOutput += data.toString();
   });
 
+  pythonProcess.stdout.on('data', (data) => {
+    dataOutput += data.toString();
+    console.log("Partial data received: ", data.toString()); // Esto te ayudará a ver qué está enviando Python
+  });
+  
   pythonProcess.on('close', (code) => {
+    console.log("Data received from Python: ", dataOutput); // Imprime los datos completos recibidos
+  
     if (code !== 0) {
       bot.sendMessage(chatId, "Error al cargar los empleados de la sucursal.");
       console.error(`Python script exited with code ${code}`);
       return;
     }
-
+  
+    if (!dataOutput.trim()) {
+      bot.sendMessage(chatId, "No data received from Python script.");
+      return;
+    }
+  
     try {
       const result = JSON.parse(dataOutput);
       if (result.status === 'success') {
         sessions[chatId].employees = result.data; // Almacenar empleados en la sesión
-        console.log(sessions[chatId].employees);
         bot.sendMessage(chatId, "Empleados cargados. Seleccione su turno:", {
           reply_markup: {
             keyboard: [
@@ -843,15 +854,14 @@ bot.on('callback_query', (callbackQuery) => {
       }
     } catch (err) {
       bot.sendMessage(chatId, "Error al procesar la respuesta del servidor.");
-      console.error(err);
+      console.error("JSON parse error: ", err);
     }
   });
-
+  
   pythonProcess.stderr.on('data', (data) => {
     console.error(`stderr: ${data}`);
   });
 });
-
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   if (!sessions[chatId] || sessions[chatId].employees.length === 0) {
