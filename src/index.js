@@ -814,7 +814,7 @@ bot.on('callback_query', (callbackQuery) => {
   const sucursal = callbackQuery.data;
 
   // Ejecutar el script de Python para obtener los empleados de la sucursal
-  const pythonProcess = spawn('python3', ['./src/obtener_empleados', sucursal]);
+  const pythonProcess = spawn('python3', ['./src/obtener_empleados.py', sucursal]);
 
   let dataOutput = '';
   pythonProcess.stdout.on('data', (data) => {
