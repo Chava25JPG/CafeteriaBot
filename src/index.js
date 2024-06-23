@@ -784,12 +784,8 @@ bot.onText(/\/cierre/, (msg) => {
 
 
 
-
-
-
 const sessions = {};
 
-// Handler para iniciar el proceso de apertura de turno
 bot.onText(/\/apertura_turno/, (msg) => {
   const chatId = msg.chat.id;
   sessions[chatId] = { employees: [] };  // Inicializar sesión para el usuario
@@ -807,7 +803,6 @@ bot.onText(/\/apertura_turno/, (msg) => {
   bot.sendMessage(chatId, "Seleccione la sucursal:", { reply_markup: replyMarkup });
 });
 
-// Manejar la selección de la sucursal
 bot.on('callback_query', (callbackQuery) => {
   const message = callbackQuery.message;
   const chatId = message.chat.id;
@@ -857,7 +852,6 @@ bot.on('callback_query', (callbackQuery) => {
   });
 });
 
-// Handler para manejar la selección del turno o las opciones adicionales
 bot.on('message', async (msg) => {
   const chatId = msg.chat.id;
   if (!sessions[chatId] || sessions[chatId].employees.length === 0) {
@@ -881,7 +875,6 @@ bot.on('message', async (msg) => {
       bot.sendMessage(chatId, "Por favor, elija una opción del menú.");
   }
 });
-
 
 
 
