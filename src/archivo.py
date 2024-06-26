@@ -253,26 +253,41 @@ def obtener_o_crear_hoja(sheet_id, title):
     print(f"Hoja '{title}' creada en el archivo {sheet_id}")
     return response['replies'][0]['addSheet']['properties']['sheetId']
 
-def obtener_o_crear_archivo_dia_especifico(fecha,sucursal):
-    """ Busca o crea un archivo de Google Sheets para un día específico basado en la fecha. """
-    mx_zone = timezone('America/Mexico_City')
-    mx_time = datetime.strptime(fecha, "%Y-%m-%d").astimezone(mx_zone)
-    day = mx_time.strftime('%d')
-    month = mx_time.strftime('%m')
-    weekday = mx_time.strftime('%A')
-    formatted_file_name = f"{day}{month}{weekday}Reporte{sucursal}"
+def obtener_o_crear_archivo_dia_especifico(fecha, sucursal, folder_id):
+    """ Busca o crea un archivo de Google Sheets para un día específico basado en la fecha en la sucursal específica dentro de la estructura de carpetas dada. """
+    try:
+        mx_zone = timezone('America/Mexico_City')
+        mx_time = datetime.strptime(fecha, "%Y-%m-%d").astimezone(mx_zone)
 
-    query = f"name='{formatted_file_name}' and mimeType='application/vnd.google-apps.spreadsheet'"
-    response = drive_service.files().list(q=query).execute()
-    files = response.get('files', [])
+        day = mx_time.strftime('%d')
+        month = mx_time.strftime('%m')
+        year = mx_time.strftime('%Y')
+        weekday = mx_time.strftime('%A')
+        formatted_file_name = f"{day}{month}{weekday}Reporte{sucursal}"
 
-    if not files:
-        file_metadata = {'name': formatted_file_name, 'mimeType': 'application/vnd.google-apps.spreadsheet'}
-        file = drive_service.files().create(body=file_metadata, fields='id').execute()
-        print(f"Archivo creado: {file['id']} con nombre {formatted_file_name}")
-        return file.get('id')
-    print(f"Archivo encontrado: {files[0]['id']} con nombre {formatted_file_name}")
-    return files[0]['id']
+        # Buscar o crear la carpeta del año y del mes
+        year_folder_id = buscar_crear_carpeta(year, folder_id)
+        month_folder_id = buscar_crear_carpeta(month, year_folder_id)
+
+        # Buscar el archivo por el nombre formateado o crear uno nuevo
+        sheet_id = buscar_archivo(formatted_file_name, month_folder_id)
+        if not sheet_id:
+            file_metadata = {
+                'name': formatted_file_name,
+                'mimeType': 'application/vnd.google-apps.spreadsheet',
+                'parents': [month_folder_id]
+            }
+            file = drive_service.files().create(body=file_metadata, fields='id').execute()
+            sheet_id = file.get('id')
+            print(f"Archivo creado: {sheet_id} con nombre {formatted_file_name}")
+        else:
+            print(f"Archivo encontrado: {sheet_id} con nombre {formatted_file_name}")
+
+        return sheet_id
+
+    except Exception as e:
+        print(f"Error al obtener o crear el archivo: {str(e)}")
+        return None
 
 def encontrar_siguiente_fila_vacia(sheet_id, sheet_name):
     """Estima la siguiente fila vacía buscando en la columna A."""
@@ -371,12 +386,14 @@ if __name__ == '__main__':
             obtener_lista_empleados(folder_id, archivo_nombre)
 
         elif command == 'subir_foto':
+            folder_id = '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl'
             fecha = sys.argv[3]
             file_url = sys.argv[4]
             tipo = sys.argv[5]
             descripcion = sys.argv[6]
             sucursal = sys.argv[7]
-            sheet_id = obtener_o_crear_archivo_dia_especifico(fecha, sucursal)
+
+            sheet_id = obtener_o_crear_archivo_dia_especifico(fecha, sucursal, folder_id)
             hoja_id = obtener_o_crear_hoja(sheet_id, "Inicio")
             subir_foto_a_hoja(sheet_id, file_url, tipo, fecha, descripcion)
 
