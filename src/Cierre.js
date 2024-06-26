@@ -3,8 +3,13 @@ const moment = require('moment-timezone');
 const { spawn } = require('child_process');
 const axios = require('axios');
 
-async function askDesmonte(chatId) {
-    await showTaskMenu(chatId);
+const sessions = {};
+
+async function askDesmonte(chatId, sucursal) {
+    await showTaskMenu(chatId, sucursal);
+    sessions[chatId] = {
+        sucursal: sucursal
+      };
 }
 
 const taskCompletion = {};
@@ -29,7 +34,7 @@ function initializeTaskCompletion(chatId) {
     };
 }
 
-async function showTaskMenu(chatId) {
+async function showTaskMenu(chatId, sucursal) {
     initializeTaskCompletion(chatId);
 
     const options = Object.entries(taskCompletion[chatId])
@@ -42,7 +47,7 @@ async function showTaskMenu(chatId) {
         return;
     }
 
-    options.push(['Terminar']);
+    options.push(['✅✅📜Enviar Registro📜✅✅']);
 
     await bot.sendMessage(chatId, "Seleccione la tarea a registrar:", {
         reply_markup: {
@@ -54,10 +59,10 @@ async function showTaskMenu(chatId) {
 
     bot.once('message', async (msg) => {
         const text = msg.text;
-        if (text === 'Terminar') {
+        if (text === '✅✅📜Enviar Registro📜✅✅') {
             await bot.sendMessage(chatId, "Registro completo.");
             const groupId = -4224013774;  
-            sendSheetLinkToTelegramGroup(groupId);
+            sendSheetLinkToTelegramGroup(groupId, sucursal);
             await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
             delete taskCompletion[chatId];
             return;
@@ -72,9 +77,10 @@ async function showTaskMenu(chatId) {
     });
 }
 
-async function sendSheetLinkToTelegramGroup(chatId) {
+async function sendSheetLinkToTelegramGroup(chatId, sucursal) {
     folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
-    const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
+    
+    const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId, sucursal]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
   
     let dataOutput = '';
     let errorOutput = '';
@@ -181,7 +187,7 @@ async function registerClosure(chatId, tipo, descripcion) {
     const now = moment().tz('America/Mexico_City');
     const fecha = now.format('YYYY-MM-DD');
     const file_url = ''; // Dejar vacío ya que no se sube foto
-    await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion);
+    await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion, chatId);
 }
 
 async function askForRefillFood(chatId) {
@@ -636,7 +642,7 @@ async function handlePhotoUpload(chatId, msg, tipo, descripcion = '') {
         const file_path = await getFileLink(file_id);
         const now = moment().tz('America/Mexico_City');
         const fecha = now.format('YYYY-MM-DD');
-        await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_path, tipo, descripcion);
+        await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_path, tipo, descripcion, chatId);
         await bot.sendMessage(chatId, "Foto subida exitosamente a la hoja de cálculo.");
     } else {
         await bot.sendMessage(chatId, "Por favor envíe una foto.");
@@ -653,9 +659,10 @@ async function getFileLink(fileId) {
     }
 }
 
-function subirFoto(folder_id, fecha, file_url, tipo, descripcion) {
+function subirFoto(folder_id, fecha, file_url, tipo, descripcion, chatId) {
     return new Promise((resolve, reject) => {
-        const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_foto', folder_id, fecha, file_url, tipo, descripcion]);
+        const sucursal = sessions[chatId].sucursal;
+        const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_foto', folder_id, fecha, file_url, tipo, descripcion, sucursal]);
 
         pythonProcess.stdout.on('data', (data) => {
             console.log(`Python Output: ${data.toString()}`);

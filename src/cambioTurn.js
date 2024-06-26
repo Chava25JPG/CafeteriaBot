@@ -14,7 +14,7 @@ import('dateformat').then((module) => {
 }).catch(error => console.log('Error loading the dateFormat module', error));
 const bot = require('./confBot.js');    
 
-
+const sessions = {};
 
 
 async function getFileLink(fileId) {
@@ -61,7 +61,9 @@ async function getFileLink(fileId) {
   
   function registrarAsistencia(empleado, fecha, hora, rol, motivo) {
     return new Promise((resolve, reject) => {
-      const args = ['asistencia', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia', empleado, fecha, hora, rol, motivo];
+      const sucursal = sessions[chatId].sucursal;
+      
+      const args = ['asistencia', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia', empleado, fecha, hora, rol,sucursal, motivo];
       const pythonProcess = spawn('python3', ['./src/archivo.py', ...args]);
   
       let output = '';
@@ -92,12 +94,16 @@ async function getFileLink(fileId) {
     faltas_retardos: []
   };
   
-  async function handleCambioCommand(chatId) {
-    const employees = await obtenerEmpleados(); // Asumimos que esta función existe
+  async function handleCambioCommand(chatId, employees, sucursal) {
+     // Asumimos que esta función existe
     if (!employees || employees.length === 0) {
       await bot.sendMessage(chatId, "No se encontraron empleados.");
       return;
     }
+    sessions[chatId] = {
+      employees: result.data,
+      sucursal: sucursal
+    };
   
     // Iniciar el proceso de elegir empleado y rol
     await chooseEmployee(chatId, employees);
@@ -126,7 +132,13 @@ async function getFileLink(fileId) {
     });
   
     bot.once('message', async msg => {
+      
       const rol = msg.text;
+      const now = moment().tz('America/Mexico_City');
+      const fecha = now.format('YYYY-MM-DD');
+      const hora = now.format('HH:mm:ss');
+
+      const result = await registrarAsistencia(empleado, fecha, hora, rol);
       asistencia.llegaron.push({ nombre: empleado, rol: rol });
       await bot.sendMessage(chatId, `Asistencia registrada para ${empleado} como ${rol}.`);
       askForMore(chatId);
@@ -174,20 +186,39 @@ async function getFileLink(fileId) {
     });
   }
   
+
+
   async function handleFaltaRetardo(chatId, tipo) {
-    const falta_o_retardo = tipo.includes('falta') ? 'Falta' : 'Retardo';
-    await bot.sendMessage(chatId, "Indique el nombre del empleado:", {
+    const now = moment().tz('America/Mexico_City');
+    const fecha = now.format('YYYY-MM-DD');
+    const employees = await obtenerEmpleados();
+  
+    await bot.sendMessage(chatId, `Seleccione el empleado para ${tipo.toLowerCase()}:`, {
       reply_markup: {
-        force_reply: true
+        keyboard: employees.map(name => [{ text: name }]),
+        one_time_keyboard: true,
+        resize_keyboard: true
       }
     });
   
     bot.once('message', async msg => {
-      asistencia.faltas_retardos.push({ nombre: msg.text, tipo: falta_o_retardo });
-      askForMore(chatId);
+      const empleado = msg.text;
+      await bot.sendMessage(chatId, `Ingrese el motivo del ${tipo.toLowerCase()}:`);
+      bot.once('message', async msg => {
+        const motivo = msg.text;
+        const hora = now.format('HH:mm:ss');
+        const rol = tipo === 'Marcar falta' ? 'Falta' : 'Retardo';
+        await registrarAsistencia(empleado, fecha, hora, rol, motivo);
+        await bot.sendMessage(chatId, `Se ha registrado un ${tipo.toLowerCase()} para ${empleado}.`);
+        asistencia.faltas_retardos.push({ nombre: msg.text, tipo: falta_o_retardo });
+       askForMore(chatId);
+      });
     });
   }
-  
+
+
+
+
   async function showTaskMenu1(chatId) {
     await bot.sendMessage(chatId, "¿Sale el servicio?", {
         reply_markup: {
@@ -200,8 +231,9 @@ async function getFileLink(fileId) {
     return new Promise((resolve, reject) => {
         bot.once('message', async msg => {
             try {
+                const sucursal = sessions[chatId].sucursal;
                 const sale_servicio = msg.text === 'Sí ✅' ? '✅Sí sale✅' : '⛔⚠No sale⚠⛔';
-                let message = `SUC X ${sale_servicio}\nllegó:\n`;
+                let message = `SUC ${sucursal} ${sale_servicio}\nllegó:\n`;
                 asistencia.llegaron.forEach(emp => {
                     message += `${emp.nombre}-----------------${emp.rol}\n`;
                 });
@@ -252,11 +284,11 @@ async function showTaskMenu(chatId) {
 
   if (options.length === 0) {
     await bot.sendMessage(chatId, "Todas las tareas han sido registradas. ¡Buen trabajo!");
-    delete taskCompletion[chatId]; // Limpia el estado al terminar
+    delete taskCompletion[chatId]; // Limpia el estado al ✅✅📜Enviar Registro📜✅✅
     return;
   }
 
-  options.push(['Terminar']); // Opción para terminar y cerrar el menú
+  options.push(['✅✅📜Enviar Registro📜✅✅']); // Opción para ✅✅📜Enviar Registro📜✅✅ y cerrar el menú
 
   await bot.sendMessage(chatId, "Seleccione la tarea a registrar:", {
     reply_markup: {
@@ -269,13 +301,13 @@ async function showTaskMenu(chatId) {
   // Manejar la respuesta del usuario
   bot.once('message', async (msg) => {
     const text = msg.text;
-    if (text === 'Terminar') {
+    if (text === '✅✅📜Enviar Registro📜✅✅') {
       await bot.sendMessage(chatId, "Registro completo.");
       const groupId = -4224013774;  
 
       sendSheetLinkToTelegramGroup(groupId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
-      delete taskCompletion[chatId]; // Limpia el estado al terminar
+      delete taskCompletion[chatId]; // Limpia el estado al ✅✅📜Enviar Registro📜✅✅
       return;
     }
     if (taskCompletion[chatId][text] === false) {
@@ -290,7 +322,8 @@ async function showTaskMenu(chatId) {
 
 async function sendSheetLinkToTelegramGroup(chatId) {
   folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
-  const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
+  const sucursal = sessions[chatId].sucursal;
+  const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId, sucursal]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
 
   let dataOutput = '';
   let errorOutput = '';
@@ -476,6 +509,7 @@ async function askPlaylistInfo(chatId) {
       const file_path = await getFileLink(file_id);
       const now = moment().tz('America/Mexico_City');
       const fecha = now.format('YYYY-MM-DD');
+      
       await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_path, tipo, descripcion);
       await bot.sendMessage(chatId, "Foto subida exitosamente a la hoja de cálculo.");
     } else {
@@ -489,7 +523,8 @@ async function askPlaylistInfo(chatId) {
   
   function subirFoto(folder_id,fecha ,file_url, tipo, descripcion) {
     return new Promise((resolve, reject) => {
-      const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_foto', folder_id,fecha, file_url, tipo, descripcion]);
+      const sucursal = sessions[chatId].sucursal;
+      const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_foto', folder_id,fecha, file_url, tipo, descripcion, sucursal]);
   
       pythonProcess.stdout.on('data', (data) => {
         console.log(`Python Output: ${data.toString()}`);

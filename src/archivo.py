@@ -124,7 +124,7 @@ def obtener_lista_empleados(folder_id, archivo_nombre):
     else:
         print(json.dumps([]))
 
-def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora, rol, motivo):
+def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora, rol,sucursal, motivo):
     try:
         # Zona horaria de México
         mx_zone = timezone('America/Mexico_City')
@@ -142,7 +142,7 @@ def registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora, rol, 
         month = now.strftime('%m')
         day = now.strftime('%d')
         weekday = now.strftime('%A')
-        formatted_file_name = f"{day}{month}{weekday}Reporte"
+        formatted_file_name = f"{day}{month}{weekday}Reporte{sucursal}"
         
         # Buscar o crear la carpeta del año y del mes
         year_folder_id = buscar_crear_carpeta(year, folder_id)
@@ -253,14 +253,14 @@ def obtener_o_crear_hoja(sheet_id, title):
     print(f"Hoja '{title}' creada en el archivo {sheet_id}")
     return response['replies'][0]['addSheet']['properties']['sheetId']
 
-def obtener_o_crear_archivo_dia_especifico(fecha):
+def obtener_o_crear_archivo_dia_especifico(fecha,sucursal):
     """ Busca o crea un archivo de Google Sheets para un día específico basado en la fecha. """
     mx_zone = timezone('America/Mexico_City')
     mx_time = datetime.strptime(fecha, "%Y-%m-%d").astimezone(mx_zone)
     day = mx_time.strftime('%d')
     month = mx_time.strftime('%m')
     weekday = mx_time.strftime('%A')
-    formatted_file_name = f"{day}{month}{weekday}Reporte"
+    formatted_file_name = f"{day}{month}{weekday}Reporte{sucursal}"
 
     query = f"name='{formatted_file_name}' and mimeType='application/vnd.google-apps.spreadsheet'"
     response = drive_service.files().list(q=query).execute()
@@ -335,7 +335,7 @@ def obtener_o_crear_archivo_historial(folder_id):
         return file.get('id')
     return files[0]['id']
 
-def subir_reporte_danio(folder_id, fecha, file_url, tipo, descripcion):
+def subir_reporte_danio(folder_id, fecha, file_url, tipo, descripcion, sucursal):
     """Sube la información de un equipo dañado al archivo 'Historial Equipos'."""
     historial_sheet_id = obtener_o_crear_archivo_historial(folder_id)
     hoja_id = obtener_o_crear_hoja(historial_sheet_id, "Reportes de Equipos Dañados")
@@ -343,7 +343,7 @@ def subir_reporte_danio(folder_id, fecha, file_url, tipo, descripcion):
 
     # Insertar los datos con la fecha de reporte
     values = [
-        [fecha, tipo, f'=IMAGE("{file_url}")', descripcion, 'Sin resolver']
+        [sucursal, fecha, tipo, f'=IMAGE("{file_url}")', descripcion, 'Sin resolver']
     ]
     range_name = f"Reportes de Equipos Dañados!A{next_row}:E{next_row}"
     body = {'values': values}
@@ -362,8 +362,9 @@ if __name__ == '__main__':
             fecha = sys.argv[5]
             hora = sys.argv[6]
             rol = sys.argv[7]
-            motivo = sys.argv[8] if len(sys.argv) > 8 else None  # Añadir motivo si está presente
-            registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora, rol, motivo)
+            sucursal = sys.argv[8]
+            motivo = sys.argv[9] if len(sys.argv) > 8 else None  # Añadir motivo si está presente
+            registrar_asistencia(folder_id, archivo_nombre, empleado, fecha, hora, rol,sucursal, motivo)
         elif command == 'listar':
             folder_id = sys.argv[2]
             archivo_nombre = sys.argv[3]
@@ -374,7 +375,8 @@ if __name__ == '__main__':
             file_url = sys.argv[4]
             tipo = sys.argv[5]
             descripcion = sys.argv[6]
-            sheet_id = obtener_o_crear_archivo_dia_especifico(fecha)
+            sucursal = sys.argv[7]
+            sheet_id = obtener_o_crear_archivo_dia_especifico(fecha, sucursal)
             hoja_id = obtener_o_crear_hoja(sheet_id, "Inicio")
             subir_foto_a_hoja(sheet_id, file_url, tipo, fecha, descripcion)
 
@@ -384,5 +386,6 @@ if __name__ == '__main__':
             file_url = sys.argv[4]
             tipo = sys.argv[5]
             descripcion = sys.argv[6]
+            sucursal = sys.argv[7]
             
-            subir_reporte_danio(folder_id, fecha,file_url, tipo, descripcion)
+            subir_reporte_danio(folder_id, fecha,file_url, tipo, descripcion, sucursal)

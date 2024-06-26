@@ -7,6 +7,7 @@ const fs = require('fs');
 const { google } = require('googleapis');
 const moment = require('moment-timezone');
 const bot = require('./confBot.js')
+const sessions = {};
 const { handleCambioCommand } = require('./cambioTurn.js');
 
 const { askDesmonte } = require('./Cierre.js')
@@ -85,6 +86,96 @@ async function ensureFolderExists(parentId, folderName) {
     return null;  // Retorna null para manejo de error en llamadas.
   }
 }
+
+bot.onText(/\/apertura_turno/, (msg) => {
+  const chatId = msg.chat.id;
+  sessions[chatId] = { employees: [] };  // Inicializar sesión para el usuario
+
+  const replyMarkup = JSON.stringify({
+    inline_keyboard: [
+      [{ text: "Satelite", callback_data: "Satelite" }],
+      [{ text: "Roma", callback_data: "Roma" }],
+      [{ text: "Polanco", callback_data: "Polanco" }],
+      [{ text: "Coyoacan", callback_data: "Coyoacan" }],
+      [{ text: "Condesa", callback_data: "Condesa" }]
+    ]
+  });
+
+  bot.sendMessage(chatId, "Seleccione la sucursal:", { reply_markup: replyMarkup });
+});
+
+bot.on('callback_query', (callbackQuery) => {
+  const message = callbackQuery.message;
+  const chatId = message.chat.id;
+  const sucursal = callbackQuery.data;
+
+  
+
+  // Ejecutar el script de Python para obtener los empleados de la sucursal
+  const pythonProcess = spawn('python3', ['src/obtener_empleados.py', sucursal]);
+
+  let dataOutput = '';
+  pythonProcess.stdout.on('data', (data) => {
+      dataOutput += data.toString();
+  });
+
+  pythonProcess.on('close', (code) => {
+      console.log("Full output received from Python:", dataOutput);
+      if (code !== 0) {
+          console.error(`Python script exited with code ${code}`);
+          bot.sendMessage(chatId, "Error al cargar los empleados de la sucursal.");
+          return;
+      }
+
+      try {
+          const result = JSON.parse(dataOutput);
+          if (result.status === 'success') {
+            sessions[chatId] = {
+              employees: result.data,
+              sucursal: sucursal
+            }; // Almacenar empleados en la sesión
+            
+              bot.sendMessage(chatId, "Empleados cargados. Seleccione su turno:", {
+                  reply_markup: {
+                      keyboard: [['🌞Turno Matutino🌞', '🌕Turno Vespertino🌕'], ['🚪Cierre🚪', '❕Mas opciones❕']],
+                      one_time_keyboard: true,
+                      resize_keyboard: true
+                  }
+              });
+          } else {
+              bot.sendMessage(chatId, `Error: ${result.message}`);
+          }
+      } catch (err) {
+          console.error(`Error parsing JSON from Python script: ${err}`);
+          bot.sendMessage(chatId, "Error al procesar la respuesta del servidor.");
+      }
+  });
+});
+bot.on('message', async (msg) => {
+  const chatId = msg.chat.id;
+  if (!sessions[chatId] || sessions[chatId].employees.length === 0) {
+    return; // Si no hay empleados cargados, se ignora el mensaje
+  }
+  const employees = sessions[chatId].employees;
+  const sucursal = sessions[chatId].sucursal;
+
+  switch (msg.text) {
+    case '🌞Turno Matutino🌞':
+      handleAsistenciaCommand(chatId, employees, sucursal);
+      break;
+    case '🌕Turno Vespertino🌕':
+      handleAsistenciaCommand(chatId, employees, sucursal);
+      break;
+    case '🚪Cierre🚪':
+      askDesmonte(chatId, sucursal);
+      break;
+    case '❕Mas opciones❕':
+      handleAdditionalOptions1(chatId);
+      break;
+    default:
+      
+  }
+});
 
 async function deleteExistingFile(folderId, filename) {
   const query = `name = '${filename}' and '${folderId}' in parents and trashed = false`;
@@ -214,9 +305,9 @@ function obtenerEmpleados() {
 
 
 
-function registrarAsistencia(empleado, fecha, hora, rol, motivo) {
+function registrarAsistencia(empleado, fecha, hora, rol, sucursal, motivo) {
   return new Promise((resolve, reject) => {
-    const args = ['asistencia', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia', empleado, fecha, hora, rol, motivo];
+    const args = ['asistencia', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia', empleado, fecha, hora, rol, sucursal, motivo];
     const pythonProcess = spawn('python3', ['./src/archivo.py', ...args]);
 
     let output = '';
@@ -241,20 +332,26 @@ function registrarAsistencia(empleado, fecha, hora, rol, motivo) {
 }
 
 
+let asistencia = {
+  llegaron: [],
+  faltas_retardos: []
+};
 
-async function handleAsistenciaCommand(chatId) {
+
+
+async function handleAsistenciaCommand(chatId, employees, sucursal) {
   
-  const employees = await obtenerEmpleados();
+  
   if (!employees || employees.length === 0) {
     await bot.sendMessage(chatId, "No se encontraron empleados.");
     return;
   }
 
   // Start the process to choose employee and role
-  await chooseEmployee(chatId, employees);
+  await chooseEmployee(chatId, employees, sucursal);
 }
 
-async function chooseEmployee(chatId, employees) {
+async function chooseEmployee(chatId, employees, sucursal) {
   await bot.sendMessage(chatId, "Quien en turno? 👤:", {
     reply_markup: {
       keyboard: employees.map(name => [{ text: name }]),
@@ -263,10 +360,10 @@ async function chooseEmployee(chatId, employees) {
     }
   });
 
-  bot.once('message', msg => handleRoleSelection(chatId, msg.text));
+  bot.once('message', msg => handleRoleSelection(chatId, msg.text, sucursal));
 }
 
-async function handleRoleSelection(chatId, empleado) {
+async function handleRoleSelection(chatId, empleado, sucursal) {
   const roles = ['servicio🍴', 'barra', 'cocina 👨‍🍳', 'runner🏃', 'lava loza'];
   await bot.sendMessage(chatId, "Seleccione el rol :", {
     reply_markup: {
@@ -281,7 +378,8 @@ async function handleRoleSelection(chatId, empleado) {
     const now = moment().tz('America/Mexico_City');
     const fecha = now.format('YYYY-MM-DD');
     const hora = now.format('HH:mm:ss');
-    const result = await registrarAsistencia(empleado, fecha, hora, rol);
+    const result = await registrarAsistencia(empleado, fecha, hora, rol, sucursal);
+    asistencia.llegaron.push({ nombre: empleado, rol: rol });
     await bot.sendMessage(chatId, `Asistencia registrada para ${empleado} como ${rol}.`);
     askForMore(chatId);
   });
@@ -300,7 +398,9 @@ async function askForMore(chatId) {
   function listenForValidResponse() {
       bot.once('message', msg => {
           if (msg.text === 'Sí ✅' || msg.text === 'Si') {
-              handleAsistenciaCommand(chatId);
+            const employees = sessions[chatId].employees;
+            const sucursal = sessions[chatId].sucursal;
+              handleAsistenciaCommand(chatId, employees, sucursal);
           } else if (msg.text === 'No ⛔' || msg.text === 'No') {
               handleAdditionalOptions(chatId);
           } else {
@@ -341,6 +441,7 @@ async function handleAdditionalOptions(chatId) {
                   await handleFaltaRetardo(chatId, msg.text);
                   break;
               case 'finalizar registro✨':
+                  await showTaskMenu1(chatId)
                   await showTaskMenu(chatId);
                   break;
           }
@@ -348,6 +449,49 @@ async function handleAdditionalOptions(chatId) {
           await bot.sendMessage(chatId, "Por favor, envíe un mensaje de texto.");
       }
   });
+}
+
+async function showTaskMenu1(chatId) {
+  await bot.sendMessage(chatId, "¿Sale el servicio?", {
+      reply_markup: {
+          keyboard: [['Sí ✅', 'No ⛔']],
+          one_time_keyboard: true,
+          resize_keyboard: true
+      }
+  });
+
+  return new Promise((resolve, reject) => {
+      bot.once('message', async msg => {
+          try {
+              const sucursal = sessions[chatId].sucursal;
+              const sale_servicio = msg.text === 'Sí ✅' ? '✅Sí sale✅' : '⛔⚠No sale⚠⛔';
+              let message = `SUC ${sucursal} ${sale_servicio}\nllegó:\n`;
+              asistencia.llegaron.forEach(emp => {
+                  message += `${emp.nombre}-----------------${emp.rol}\n`;
+              });
+              message += 'Falta o Retardo\n';
+              asistencia.faltas_retardos.forEach(emp => {
+                  message += `${emp.nombre}----${emp.tipo}\n`;
+              });
+              message += '-------------------'; // Para separar secciones si es necesario
+
+              groupChatId = -4224013774;
+
+              // Envía el mensaje al grupo especificado
+              await bot.sendMessage(groupChatId, message);
+
+              resetAsistencia(); // Reinicia la lista de asistencia para el próximo uso
+              resolve(); // Resuelve la promesa después de enviar el mensaje
+          } catch (error) {
+              reject(error); // Rechaza la promesa si hay un error
+          }
+      });
+  });
+}
+
+
+function resetAsistencia() {
+  asistencia = { llegaron: [], faltas_retardos: [] };
 }
 
 const taskCompletion = {};
@@ -373,11 +517,11 @@ async function showTaskMenu(chatId) {
 
   if (options.length === 0) {
     await bot.sendMessage(chatId, "Todas las tareas han sido registradas. ¡Buen trabajo!");
-    delete taskCompletion[chatId]; // Limpia el estado al terminar
+    delete taskCompletion[chatId]; // Limpia el estado al ✅✅📜Enviar Registro📜✅✅
     return;
   }
 
-  options.push(['Terminar']); // Opción para terminar y cerrar el menú
+  options.push(['✅✅📜Enviar Registro📜✅✅']); // Opción para ✅✅📜Enviar Registro📜✅✅ y cerrar el menú
 
   await bot.sendMessage(chatId, "Seleccione la tarea a registrar:", {
     reply_markup: {
@@ -390,7 +534,7 @@ async function showTaskMenu(chatId) {
   // Manejar la respuesta del usuario
   bot.once('message', async (msg) => {
     const text = msg.text;
-    if (text === 'Terminar') {
+    if (text === '✅✅📜Enviar Registro📜✅✅') {
       await bot.sendMessage(chatId, "Registro completo.");
       const groupId = -4224013774;  
 
@@ -398,7 +542,7 @@ async function showTaskMenu(chatId) {
       //const groupId = 1503769017;
       sendSheetLinkToTelegramGroup(groupId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
-      delete taskCompletion[chatId]; // Limpia el estado al terminar
+      delete taskCompletion[chatId]; // Limpia el estado al ✅✅📜Enviar Registro📜✅✅
       return;
     }
     if (taskCompletion[chatId][text] === false) {
@@ -412,9 +556,18 @@ async function showTaskMenu(chatId) {
 }
 
 async function sendSheetLinkToTelegramGroup(chatId) {
+  if (!sessions[chatId] || !sessions[chatId].sucursal) {
+    console.error(`No sucursal defined for session: ${chatId}`);
+    bot.sendMessage(chatId, "La sucursal no ha sido definida. Por favor, inicie de nuevo el proceso de selección.");
+    return;
+  }
+
+  const sucursal = sessions[chatId].sucursal;
   
    folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
-   const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
+   
+   
+   const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId, sucursal]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
 
    let dataOutput = '';
    let errorOutput = '';
@@ -512,6 +665,7 @@ async function askSpeakersVolume(chatId) {
       if (msg.text === 'Sí ✅') {
         const tipo = 'bocinas';
         const descripcion = 'Bocinas en buen nivel';
+        
         await registerSpeakersVolume(chatId, tipo, descripcion);
         await bot.sendMessage(chatId, "Información de las bocinas registrada correctamente.👌");
         resolve();
@@ -532,7 +686,8 @@ async function registerSpeakersVolume(chatId, tipo, descripcion) {
   const now = moment().tz('America/Mexico_City');
   const fecha = now.format('YYYY-MM-DD');
   const file_url = ''; // Dejar vacío ya que no se sube foto
-  await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion);
+  const sucursal = sessions[chatId].sucursal;
+  await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion, sucursal);
 }
 
 async function askPlaylistInfo(chatId) {
@@ -623,7 +778,7 @@ async function handleFaltaRetardo(chatId, tipo) {
 async function handleFaltaRetardo1(chatId, tipo) {
   const now = moment().tz('America/Mexico_City');
   const fecha = now.format('YYYY-MM-DD');
-  const employees = await obtenerEmpleados();
+  const employees = sessions[chatId].employees;
 
   await bot.sendMessage(chatId, `Seleccione el empleado para ${tipo.toLowerCase()}:`, {
     reply_markup: {
@@ -640,7 +795,8 @@ async function handleFaltaRetardo1(chatId, tipo) {
       const motivo = msg.text;
       const hora = now.format('HH:mm:ss');
       const rol = tipo === 'Marcar falta' ? 'Falta' : 'Retardo';
-      await registrarAsistencia(empleado, fecha, hora, rol, motivo);
+      const sucursal = sessions[chatId].sucursal;
+      await registrarAsistencia(empleado, fecha, hora, rol,sucursal, motivo);
       await bot.sendMessage(chatId, `Se ha registrado un ${tipo.toLowerCase()} para ${empleado}.`);
       handleAdditionalOptions1(chatId);
     });
@@ -655,7 +811,8 @@ async function handlePhotoUpload(chatId, msg, tipo, descripcion = '') {
     const file_path = await getFileLink(file_id);
     const now = moment().tz('America/Mexico_City');
     const fecha = now.format('YYYY-MM-DD');
-    await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_path, tipo, descripcion);
+    const sucursal = sessions[chatId].sucursal;
+    await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_path, tipo, descripcion, sucursal);
     await bot.sendMessage(chatId, "Foto subida exitosamente a la hoja de cálculo.");
   } else {
     await bot.sendMessage(chatId, "Por favor envíe una foto.");
@@ -666,9 +823,9 @@ function getFileLink(file_id) {
   return bot.getFileLink(file_id);
 }
 
-function subirFoto(folder_id,fecha ,file_url, tipo, descripcion) {
+function subirFoto(folder_id,fecha ,file_url, tipo, descripcion, sucursal) {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_foto', folder_id,fecha, file_url, tipo, descripcion]);
+    const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_foto', folder_id,fecha, file_url, tipo, descripcion, sucursal]);
 
     pythonProcess.stdout.on('data', (data) => {
       console.log(`Python Output: ${data.toString()}`);
@@ -689,9 +846,9 @@ function subirFoto(folder_id,fecha ,file_url, tipo, descripcion) {
   });
 }
 
-function subirReporteDanio(folder_id, fecha, file_url, tipo, descripcion) {
+function subirReporteDanio(folder_id, fecha, file_url, tipo, descripcion, sucursal) {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_reporte_danio', folder_id, fecha, file_url, tipo, descripcion]);
+    const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_reporte_danio', folder_id, fecha, file_url, tipo, descripcion, sucursal]);
 
     let dataOutput = '';
     let errorOutput = '';
@@ -725,7 +882,8 @@ async function handlePhotoUpload1(chatId, msg, tipo, descripcion = '') {
     const file_path = await getFileLink(file_id);
     const now = moment().tz('America/Mexico_City');
     const fecha = now.format('YYYY-MM-DD');
-    await subirReporteDanio('1pS-L0xpDzIeuh9e0XliVhzjZUa7mYkvt', fecha, file_path, tipo, descripcion);
+    const sucursal = sessions[chatId].sucursal;
+    await subirReporteDanio('1pS-L0xpDzIeuh9e0XliVhzjZUa7mYkvt', fecha, file_path, tipo, descripcion, sucursal);
     await bot.sendMessage(chatId, "Foto subida exitosamente a la hoja de cálculo.");
   } else {
     await bot.sendMessage(chatId, "Por favor envíe una foto.");
@@ -784,107 +942,9 @@ bot.onText(/\/cierre/, (msg) => {
 
 
 
-const sessions = {};
 
-bot.onText(/\/apertura_turno/, (msg) => {
-  const chatId = msg.chat.id;
-  sessions[chatId] = { employees: [] };  // Inicializar sesión para el usuario
 
-  const replyMarkup = JSON.stringify({
-    inline_keyboard: [
-      [{ text: "Satelite", callback_data: "Satelite" }],
-      [{ text: "Roma", callback_data: "Roma" }],
-      [{ text: "Polanco", callback_data: "Polanco" }],
-      [{ text: "Coyoacan", callback_data: "Coyoacan" }],
-      [{ text: "Condesa", callback_data: "Condesa" }]
-    ]
-  });
 
-  bot.sendMessage(chatId, "Seleccione la sucursal:", { reply_markup: replyMarkup });
-});
-
-bot.on('callback_query', (callbackQuery) => {
-  const message = callbackQuery.message;
-  const chatId = message.chat.id;
-  const sucursal = callbackQuery.data;
-
-  // Ejecutar el script de Python para obtener los empleados de la sucursal
-  const pythonProcess = spawn('python3', ['./src/obtener_empleados.py', sucursal]);
-
-  let dataOutput = '';
-  pythonProcess.stdout.on('data', (data) => {
-    dataOutput += data.toString();
-  });
-
-  pythonProcess.stdout.on('data', (data) => {
-    dataOutput += data.toString();
-    console.log("Partial data received: ", data.toString()); // Esto te ayudará a ver qué está enviando Python
-  });
-  
-  pythonProcess.on('close', (code) => {
-    console.log("Data received from Python: ", dataOutput); // Imprime los datos completos recibidos
-  
-    if (code !== 0) {
-      bot.sendMessage(chatId, "Error al cargar los empleados de la sucursal.");
-      console.error(`Python script exited with code ${code}`);
-      return;
-    }
-  
-    if (!dataOutput.trim()) {
-      bot.sendMessage(chatId, "No data received from Python script.");
-      return;
-    }
-  
-    try {
-      const result = JSON.parse(dataOutput);
-      if (result.status === 'success') {
-        sessions[chatId].employees = result.data; // Almacenar empleados en la sesión
-        bot.sendMessage(chatId, "Empleados cargados. Seleccione su turno:", {
-          reply_markup: {
-            keyboard: [
-              ['🌞Turno Matutino🌞', '🌕Turno Vespertino🌕'],
-              ['🚪Cierre🚪', '❕Mas opciones❕']
-            ],
-            one_time_keyboard: true,
-            resize_keyboard: true
-          }
-        });
-      } else {
-        bot.sendMessage(chatId, `Error: ${result.message}`);
-      }
-    } catch (err) {
-      bot.sendMessage(chatId, "Error al procesar la respuesta del servidor.");
-      console.error("JSON parse error: ", err);
-    }
-  });
-  
-  pythonProcess.stderr.on('data', (data) => {
-    console.error(`stderr: ${data}`);
-  });
-});
-bot.on('message', async (msg) => {
-  const chatId = msg.chat.id;
-  if (!sessions[chatId] || sessions[chatId].employees.length === 0) {
-    return; // Si no hay empleados cargados, se ignora el mensaje
-  }
-
-  switch (msg.text) {
-    case '🌞Turno Matutino🌞':
-      handleAsistenciaCommand(chatId, 'matutino');
-      break;
-    case '🌕Turno Vespertino🌕':
-      handleAsistenciaCommand(chatId, 'vespertino');
-      break;
-    case '🚪Cierre🚪':
-      askDesmonte(chatId);
-      break;
-    case '❕Mas opciones❕':
-      handleAdditionalOptions1(chatId);
-      break;
-    default:
-      bot.sendMessage(chatId, "Por favor, elija una opción del menú.");
-  }
-});
 
 
 

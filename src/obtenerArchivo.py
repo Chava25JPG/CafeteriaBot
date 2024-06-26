@@ -37,7 +37,7 @@ def buscar_archivo_en_carpeta(nombre_archivo, folder_id):
         return files[0]['webViewLink']
     return None
 
-def obtener_link_archivo_diario(folder_id):
+def obtener_link_archivo_diario(folder_id,sucursal):
     # Establecer zona horaria de México
     mx_zone = timezone('America/Mexico_City')
     today = datetime.now(mx_zone)
@@ -51,7 +51,7 @@ def obtener_link_archivo_diario(folder_id):
     month_folder_id = buscar_crear_carpeta(month, year_folder_id)
 
     # Nombre del archivo con formato día-mes-díaSemanaReporte
-    formatted_file_name = f"{day}{month}{weekday}Reporte"
+    formatted_file_name = f"{day}{month}{weekday}Reporte{sucursal}"
     file_link = buscar_archivo_en_carpeta(formatted_file_name, month_folder_id)
     if file_link:
         return file_link
@@ -62,6 +62,7 @@ def obtener_link_archivo_diario(folder_id):
 # Ejemplo de uso
 if __name__ == '__main__':
     folder_id = sys.argv[1]  # El ID de la carpeta se pasa como argumento al script
-    link = obtener_link_archivo_diario(folder_id)
+    sucursal = sys.argv[2]
+    link = obtener_link_archivo_diario(folder_id, sucursal)
     if link:
         print(f"Enlace al archivo: {link}")
