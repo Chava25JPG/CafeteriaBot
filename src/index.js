@@ -540,7 +540,7 @@ async function showTaskMenu(chatId) {
 
       //mio
       //const groupId = 1503769017;
-      sendSheetLinkToTelegramGroup(groupId);
+      sendSheetLinkToTelegramGroup(chatId,groupId);
       await bot.sendMessage(chatId, "Para volver al menu principal, presione /apertura_turno");
       delete taskCompletion[chatId]; // Limpia el estado al ✅✅📜Enviar Registro📜✅✅
       return;
@@ -555,7 +555,7 @@ async function showTaskMenu(chatId) {
   });
 }
 
-async function sendSheetLinkToTelegramGroup(chatId) {
+async function sendSheetLinkToTelegramGroup(chatId,groupId) {
   if (!sessions[chatId] || !sessions[chatId].sucursal) {
     console.error(`No sucursal defined for session: ${chatId}`);
     bot.sendMessage(chatId, "La sucursal no ha sido definida. Por favor, inicie de nuevo el proceso de selección.");
@@ -582,7 +582,7 @@ async function sendSheetLinkToTelegramGroup(chatId) {
    pythonProcess.on('close', (code) => {
        if (code === 0) {
            console.log(`Python Output: ${dataOutput}`);
-           bot.sendMessage(chatId, `Aquí está el enlace del archivo de el reporte Matutino: ${dataOutput.trim()}`).catch(console.error);
+           bot.sendMessage(groupId, `Aquí está el enlace del archivo de el reporte Matutino: ${dataOutput.trim()}`).catch(console.error);
        } else {
            console.error(`Python Error: ${errorOutput}`);
            bot.sendMessage(chatId, "Hubo un error al obtener el archivo Matutino").catch(console.error);
