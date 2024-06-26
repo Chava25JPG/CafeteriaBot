@@ -253,12 +253,12 @@ def obtener_o_crear_hoja(sheet_id, title):
     print(f"Hoja '{title}' creada en el archivo {sheet_id}")
     return response['replies'][0]['addSheet']['properties']['sheetId']
 
-def obtener_o_crear_archivo_dia_especifico(fecha, sucursal, folder_id):
+def obtener_o_crear_archivo_dia_especifico( sucursal, folder_id):
     """ Busca o crea un archivo de Google Sheets para un día específico basado en la fecha y la sucursal dentro del folder especificado. """
     try:
         # Asegurarse de que la fecha esté en la zona horaria correcta
         mx_zone = timezone('America/Mexico_City')
-        mx_time = datetime.strptime(fecha, "%Y-%m-%d").astimezone(mx_zone)
+        mx_time = datetime.strptime("%Y-%m-%d").astimezone(mx_zone)
 
         # Formatear la fecha para el nombre del archivo
         day = mx_time.strftime('%d')
@@ -395,7 +395,7 @@ if __name__ == '__main__':
             descripcion = sys.argv[6]
             sucursal = sys.argv[7]
 
-            sheet_id = obtener_o_crear_archivo_dia_especifico(fecha, sucursal, folder_id)
+            sheet_id = obtener_o_crear_archivo_dia_especifico( sucursal, folder_id)
             hoja_id = obtener_o_crear_hoja(sheet_id, "Inicio")
             subir_foto_a_hoja(sheet_id, file_url, tipo, fecha, descripcion)
 
