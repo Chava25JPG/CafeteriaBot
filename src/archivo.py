@@ -395,7 +395,7 @@ if __name__ == '__main__':
             descripcion = sys.argv[6]
             sucursal = sys.argv[7]
 
-            sheet_id = obtener_o_crear_archivo_dia_especifico(fecha, sucursal)
+            sheet_id = obtener_o_crear_archivo_dia_especifico(sucursal, folder_id)
             hoja_id = obtener_o_crear_hoja(sheet_id, "Inicio")
             subir_foto_a_hoja(sheet_id, file_url, tipo, fecha, descripcion)
 
