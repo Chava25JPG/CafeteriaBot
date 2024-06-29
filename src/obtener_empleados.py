@@ -12,7 +12,8 @@ drive_service = build('drive', 'v3', credentials=credentials)
 sheets_service = build('sheets', 'v4', credentials=credentials)
 
 def obtener_empleados_por_sucursal(sucursal, parent_folder_id):
-    file_name = f"Equipo{sucursal}"
+    # El nombre del archivo ahora incluye el sufijo " (telegram)"
+    file_name = f"Personal {sucursal} (telegram)"
     query = f"name='{file_name}' and '{parent_folder_id}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and trashed=false"
     response = drive_service.files().list(q=query).execute()
     files = response.get('files', [])
@@ -34,4 +35,3 @@ if __name__ == '__main__':
     parent_folder_id = '1QqK-zY5dom7WW-fhfAG5TsYkCml05g8B'
     resultado = obtener_empleados_por_sucursal(sucursal, parent_folder_id)
     print(resultado)  # Solo una impresión del resultado en formato JSON
-
