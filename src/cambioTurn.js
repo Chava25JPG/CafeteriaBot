@@ -262,19 +262,35 @@ async function getFileLink(fileId) {
     asistencia = { llegaron: [], faltas_retardos: [] };
   }
 
-const taskCompletion = {};
+  const taskCompletion = {};
 
-function initializeTaskCompletion(chatId) {
+  function initializeTaskCompletion(chatId) {
     taskCompletion[chatId] = {
-        'Barra de Food': false,
-        'Barra de Panques': false,
-        'Barra de Bebidas': false,
         
-        'Playlist': false,
-        'Volumen de Bocinas': false
+        '🧊 Congeladores': false,
+        '🧊 Refrigeradores': false,
+        '🚪 Limpieza Rational': false,
+        '🍵 Tazas Remojándose': false,
+        '🥛 Tarros Remojándose': false,
+        '🔥 Vaporización Tazas': false,
+        '🍴 Montaje Cocina': false,
+        '🍸 Montaje Barra': false,
+        '🍰 Montaje Vitrina': false,
+        '🥞 Montaje Panques': false,
+        '🍾 Acomodo Embotellados': false,
+        '❄️ Coldbrew Fridge': false,
+        'Volumen de bocinas': false,
+        '🪑 Salones Limpios': false,
+        '🍽️ Servicios en Mesa': false,
+        '🖼️ Cuadros y Bocinas': false,
+        '🛒 Carrito Rojo': false,
+        '📦 Limpieza Bodega': false,
+        '🌿 Limpieza Hojas Plantas': false,
+        'Botes de Basura': false, 
+        'baños limpios': false
     };
-}
-
+  }
+  
 async function showTaskMenu(chatId) {
   initializeTaskCompletion(chatId); // Asegura que taskCompletion[chatId] esté inicializado
 
@@ -349,31 +365,79 @@ async function sendSheetLinkToTelegramGroup(chatId) {
 
 async function handleTask(task, chatId) {
   switch (task) {
-    case 'Barra de Food':
-      await manageBarSetup(chatId, 'food', 'Barra de Food');
-      break;
-    case 'Barra de Panques':
-      await manageBarSetup(chatId, 'panques', 'Barra de Panques');
-      break;
-    case 'Barra de Bebidas':
-      await manageBarSetup(chatId, 'bebidas', 'Barra de Bebidas');
-      break;
-    case 'Playlist':
-      await askPlaylistInfo(chatId);
-      break;
-    case 'Volumen de Bocinas':
-      await askSpeakersVolume(chatId);
-      break;
+      case '🧊 Congeladores':
+          await checkFreezers(chatId);
+          break;
+      case '🧊 Refrigeradores':
+          await checkRefrigerators(chatId);
+          break;
+      case '🚪 Limpieza Rational':
+          await checkRationalDoorCleaning(chatId);
+          break;
+      case '🍵 Tazas Remojándose':
+          await checkSoakingCups(chatId);
+          break;
+      case '🥛 Tarros Remojándose':
+          await checkSoakingJars(chatId);
+          break;
+      case '🔥 Vaporización Tazas':
+          await checkCupSteaming(chatId);
+          break;
+      case '🍴 Montaje Cocina':
+          await checkKitchenSetup(chatId);
+          break;
+      case '🍸 Montaje Barra':
+          await checkBarSetup(chatId);
+          break;
+      case '🍰 Montaje Vitrina':
+          await checkShowcaseSetup(chatId);
+          break;
+      case '🥞 Montaje Panques':
+          await checkPancakeSetup(chatId);
+          break;
+      case '🍾 Acomodo Embotellados':
+          await checkBottledArrangement(chatId);
+          break;
+      case '❄️ Coldbrew Fridge':
+          await checkColdbrewFridgeArrangement(chatId);
+          break;
+      case '🪑 Salones Limpios':
+          await checkCleanRooms(chatId);
+          break;
+      case '🍽️ Servicios en Mesa':
+          await checkTableService(chatId);
+          break;
+      case '🖼️ Cuadros y Bocinas':
+          await checkFramesAndSpeakers(chatId);
+          break;
+      case '🛒 Carrito Rojo':
+          await checkRedCartSetup(chatId);
+          break;
+      case 'Volumen de bocinas':
+          await checkSpeakersVolumeAndPlaylist(chatId);
+          break;
+      case '📦 Limpieza Bodega':
+          await checkStorageCleaning(chatId);
+          break;
+      case '🌿 Limpieza Hojas Plantas':
+          await checkPlantLeafCleaning(chatId);
+          break;
+      case 'Botes de basura':
+          await checkTrashBinsCleaning(chatId);
+          break;
+      case 'Baños limios':
+          await checkBathroomsCleaningAndStocking(chatId);
+          break;
+      // Continuar añadiendo casos según sean necesarios
       
-    default:
-      await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
-      break;
   }
-  await showTaskMenu(chatId);
+  await showTaskMenu(chatId); // Volver a mostrar el menú
 }
 
-async function manageBarSetup(chatId, barType, displayName) {
-  await bot.sendMessage(chatId, `¿Ha montado ya la ${displayName}?`, {
+
+
+async function checkTrashBinsCleaning(chatId) {
+  await bot.sendMessage(chatId, "¿Botes de basura limpios?", {
     reply_markup: {
       keyboard: [['Sí ✅', 'No ⛔']],
       one_time_keyboard: true,
@@ -383,28 +447,17 @@ async function manageBarSetup(chatId, barType, displayName) {
 
   return new Promise((resolve) => {
     bot.once('message', async (msg) => {
-      if (msg.text === 'Sí ✅') {
-        await bot.sendMessage(chatId, `Por favor, suba una foto de la ${displayName}.`);
-        bot.once('photo', async (msg) => {
-          const tipo = `barra de ${barType}`;
-          await handlePhotoUpload(chatId, msg, tipo);
-          await bot.sendMessage(chatId, `Foto de la ${displayName} registrada correctamente.`);
-          resolve();
-        });
-      } else if (msg.text === 'No ⛔') {
-        await bot.sendMessage(chatId, `Por favor, monte la ${displayName} antes de continuar.`);
-        resolve();
-      } else {
-        await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
-        await manageBarSetup(chatId, barType, displayName);
-        resolve();
-      }
+      const tipo = 'botes de basura limpios';
+      const descripcion = msg.text === 'Sí ✅' ? 'Botes de basura limpios' : 'Botes de basura sucios';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
     });
   });
 }
 
-async function askSpeakersVolume(chatId) {
-  await bot.sendMessage(chatId, "¿Las bocinas están en un buen nivel de volumen?🔊", {
+async function checkBathroomsCleaningAndStocking(chatId) {
+  await bot.sendMessage(chatId, "¿Baños limpios y abastecidos?", {
     reply_markup: {
       keyboard: [['Sí ✅', 'No ⛔']],
       one_time_keyboard: true,
@@ -414,62 +467,405 @@ async function askSpeakersVolume(chatId) {
 
   return new Promise((resolve) => {
     bot.once('message', async (msg) => {
-      if (msg.text === 'Sí ✅') {
-        const tipo = 'bocinas';
-        const descripcion = 'Bocinas en buen nivel';
-        await registerSpeakersVolume(chatId, tipo, descripcion);
-        await bot.sendMessage(chatId, "Información de las bocinas registrada correctamente.👌");
-        resolve();
-      } else if (msg.text === 'No ⛔') {
-        await bot.sendMessage(chatId, "Por favor, asegúrese de que las bocinas estén en un buen nivel de volumen.");
-        await askSpeakersVolume(chatId);
-        resolve();
-      } else {
-        await bot.sendMessage(chatId, "Por favor, seleccione una opción válida.");
-        await askSpeakersVolume(chatId);
-        resolve();
-      }
+      const tipo = 'baños limpios y abastecidos';
+      const descripcion = msg.text === 'Sí ✅' ? 'Baños limpios y abastecidos correctamente' : 'Baños sucios o desabastecidos';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
     });
   });
 }
 
-async function registerSpeakersVolume(chatId, tipo, descripcion) {
+
+async function checkFreezers(chatId) {
+  await bot.sendMessage(chatId, "¿Los congeladores están alrededor de -18 grados centígrados?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'congeladores';
+      const descripcion = msg.text === 'Sí ✅' ? 'Congeladores en temperatura adecuada' : 'Congeladores fuera de temperatura';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de los ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkRefrigerators(chatId) {
+  await bot.sendMessage(chatId, "¿Los refrigeradores están en un rango de 3 - 4 grados centígrados?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'refrigeradores';
+      const descripcion = msg.text === 'Sí ✅' ? 'Refrigeradores en temperatura adecuada' : 'Refrigeradores fuera de temperatura';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de los ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkRationalDoorCleaning(chatId) {
+  await bot.sendMessage(chatId, "¿Se hizo la limpieza de la puerta del Rational?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'puerta rational';
+      const descripcion = msg.text === 'Sí ✅' ? 'Puerta del Rational limpia' : 'Puerta del Rational no limpia';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Limpieza de la ${tipo} registrada correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkSoakingCups(chatId) {
+  await bot.sendMessage(chatId, "¿Recibiste tazas remojándose?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'tazas remojándose';
+      const descripcion = msg.text === 'Sí ✅' ? 'Tazas remojándose recibidas' : 'No se recibieron tazas remojándose';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkSoakingJars(chatId) {
+  await bot.sendMessage(chatId, "¿Recibiste tarros remojándose?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'tarros remojándose';
+      const descripcion = msg.text === 'Sí ✅' ? 'Tarros remojándose recibidos' : 'No se recibieron tarros remojándose';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkCupSteaming(chatId) {
+  await bot.sendMessage(chatId, "¿Se vaporizaron tazas?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'vaporización de tazas';
+      const descripcion = msg.text === 'Sí ✅' ? 'Tazas vaporizadas' : 'Tazas no vaporizadas';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkKitchenSetup(chatId) {
+  await bot.sendMessage(chatId, "¿Montaje de cocina realizado?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'montaje de cocina';
+      const descripcion = msg.text === 'Sí ✅' ? 'Montaje de cocina realizado' : 'Montaje de cocina no realizado';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkBarSetup(chatId) {
+  await bot.sendMessage(chatId, "¿Montaje de barra realizado?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'montaje de barra';
+      const descripcion = msg.text === 'Sí ✅' ? 'Barra montada correctamente' : 'Barra no montada';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkShowcaseSetup(chatId) {
+  await bot.sendMessage(chatId, "¿Montaje de vitrina realizado?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'montaje de vitrina';
+      const descripcion = msg.text === 'Sí ✅' ? 'Vitrina montada correctamente' : 'Vitrina no montada';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkPancakeSetup(chatId) {
+  await bot.sendMessage(chatId, "¿Montaje de panques realizado?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'montaje de panques';
+      const descripcion = msg.text === 'Sí ✅' ? 'Panques montados correctamente' : 'Panques no montados';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkBottledArrangement(chatId) {
+  await bot.sendMessage(chatId, "¿Acomodo y surtido de embotellados realizado?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'surtido de embotellados';
+      const descripcion = msg.text === 'Sí ✅' ? 'Embotellados surtidos y acomodados correctamente' : 'Embotellados no surtidos ni acomodados';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkColdbrewFridgeArrangement(chatId) {
+  await bot.sendMessage(chatId, "¿Refrigerador coldbrew surtido y acomodo realizado?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'surtido de refrigerador coldbrew';
+      const descripcion = msg.text === 'Sí ✅' ? 'Refrigerador coldbrew surtido y acomodado correctamente' : 'Refrigerador coldbrew no surtido ni acomodado';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkCleanRooms(chatId) {
+  await bot.sendMessage(chatId, "¿Salones limpios?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'limpieza de salones';
+      const descripcion = msg.text === 'Sí ✅' ? 'Salones limpios' : 'Salones no limpios';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkTableService(chatId) {
+  await bot.sendMessage(chatId, "¿Servicios en mesa colocados?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'servicios en mesa';
+      const descripcion = msg.text === 'Sí ✅' ? 'Servicios en mesa colocados correctamente' : 'Servicios en mesa no colocados';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkFramesAndSpeakers(chatId) {
+  await bot.sendMessage(chatId, "¿Cuadros derechos y limpios?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'cuadros derechos y limpios';
+      const descripcion = msg.text === 'Sí ✅' ? 'Cuadros derechos y limpios' : 'Cuadros no derechos o limpios';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkSpeakersVolumeAndPlaylist(chatId) {
+  await bot.sendMessage(chatId, "¿Bocinas en buen volumen y reproducción de playlist Boicot Café?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'bocinas y playlist';
+      const descripcion = msg.text === 'Sí ✅' ? 'Bocinas en buen volumen y playlist en reproducción' : 'Bocinas o playlist no adecuados';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkRedCartSetup(chatId) {
+  await bot.sendMessage(chatId, "¿Carrito rojo montado?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'carrito rojo montado';
+      const descripcion = msg.text === 'Sí ✅' ? 'Carrito rojo montado correctamente' : 'Carrito rojo no montado';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkStorageCleaning(chatId) {
+  await bot.sendMessage(chatId, "¿Limpieza y acomodo de bodega realizada?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'limpieza de bodega';
+      const descripcion = msg.text === 'Sí ✅' ? 'Bodega limpia y acomodada' : 'Bodega no limpia ni acomodada';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+async function checkPlantLeafCleaning(chatId) {
+  await bot.sendMessage(chatId, "¿Se limpiaron las hojas de plantas?", {
+    reply_markup: {
+      keyboard: [['Sí ✅', 'No ⛔']],
+      one_time_keyboard: true,
+      resize_keyboard: true
+    }
+  });
+
+  return new Promise((resolve) => {
+    bot.once('message', async (msg) => {
+      const tipo = 'limpieza de hojas de plantas';
+      const descripcion = msg.text === 'Sí ✅' ? 'Hojas de plantas limpias' : 'Hojas de plantas no limpias';
+      await registerEquipmentStatus(chatId, tipo, descripcion);
+      await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+      resolve();
+    });
+  });
+}
+
+
+async function registerEquipmentStatus(chatId, tipo, descripcion) {
   const now = moment().tz('America/Mexico_City');
   const fecha = now.format('YYYY-MM-DD');
   const file_url = ''; // Dejar vacío ya que no se sube foto
-  await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion);
+  const sucursal = sessions[chatId].sucursal;
+  await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion, sucursal);
 }
 
-async function askPlaylistInfo(chatId) {
-  await bot.sendMessage(chatId, "La playlist de Boicot Cafe se esta reproduciendo?💚🎶💚", {
-    reply_markup: {
-      keyboard: [['Sí ✅', 'No ⛔']],
-      one_time_keyboard: true,
-      resize_keyboard: true
-    }
-  });
-
-  return new Promise((resolve) => {
-    bot.once('message', async (msg) => {
-      if (msg.text) {
-        const playlistName = msg.text;
-        await bot.sendMessage(chatId, "Por favor, suba una foto de la pantalla que muestra la playlist.📸💚");
-
-        bot.once('photo', async (msg) => {
-          const tipo = 'playlist';
-          const descripcion = playlistName;
-          await handlePhotoUpload(chatId, msg, tipo, descripcion);
-          await bot.sendMessage(chatId, "Información de la playlist registrada correctamente.💚👌");
-          resolve();
-        });
-      } else {
-        await bot.sendMessage(chatId, "Por favor, envíe el nombre de la playlist como un mensaje de texto.");
-        await askPlaylistInfo(chatId);
-        resolve();
-      }
-    });
-  });
-}
 
 
   

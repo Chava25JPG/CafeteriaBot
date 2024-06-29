@@ -16,24 +16,24 @@ const taskCompletion = {};
 
 function initializeTaskCompletion(chatId) {
     taskCompletion[chatId] = {
-        'Refill de Food': false,
-        'Refill de Barra': false,
-        'Riego de Plantas': false,
-        'Limpieza de Food': false,
-        'Montada de Bebidas': false,
-        'Limpieza de Salones': false,
-        'Limpieza de Bodega': false,
-        'Fumigación': false,
-        'Sacar Basura': false,
-        'Alarma': false,
-        'Apagar Todo': false,
-        'Revisión de Refrigeradores': false,
-        'Revisión de Hielera': false,
-        'Rational en Lavado': false,
-        'Desmonte de Sucursal': false
+        // Existing tasks...
+        '🧊 Refrigeradores Cerrados y Funcionando': false,
+        '🧊 Hielera Funcionando': false,
+        '🌡️ Temperatura 3-4 Grados': false,
+        '🧼 Rational en Lavado': false,
+        '🔇 Reproductor Apagado': false,
+        '🌿 Riego de Plantas': false,
+        '🚫 Toma de Gas Cerrada': false,
+        '🚰 Llaves de Agua Cerradas': false,
+        '💧 Fuga de Agua en Baños': false,
+        '🔒 Alarma y Reja Aseguradas': false,
+        '🧹 Limpieza profunda de salones': false,
+        '🧹 Limpieza profunda de bodega': false,
+        '🧹 Limpieza profunda de barra': false,
+        '🗑️ Sacar basura': false,
+        '🍹 Refill de barra': false
     };
 }
-
 async function showTaskMenu(chatId, sucursal) {
     initializeTaskCompletion(chatId);
 
@@ -105,59 +105,379 @@ async function sendSheetLinkToTelegramGroup(chatId, sucursal) {
   }
   
 
-async function handleTask(task, chatId) {
-    switch (task) {
-        case 'Refill de Food':
-            await askForRefillFood(chatId);
-            break;
-        case 'Refill de Barra':
-            await askForRefillBarra(chatId);
-            break;
-        case 'Riego de Plantas':
-            await askPlantas(chatId);
-            break;
-        case 'Limpieza de Food':
-            await askForLimpiezaFood(chatId);
-            break;
-        case 'Montada de Bebidas':
-            await askForMontadaBebidas(chatId);
-            break;
-        case 'Limpieza de Salones':
-            await askLimpiezaSalones(chatId);
-            break;
-        case 'Limpieza de Bodega':
-            await askLimpiezaBodega(chatId);
-            break;
-        case 'Fumigación':
-            await askFumigacion(chatId);
-            break;
-        case 'Sacar Basura':
-            await askBasura(chatId);
-            break;
-        case 'Alarma':
-            await askAlarma(chatId);
-            break;
-        case 'Apagar Todo':
-            await askApagar(chatId);
-            break;
-        case 'Revisión de Refrigeradores':
-            await askRefrigerador(chatId);
-            break;
-        case 'Revisión de Hielera':
-            await askHielera(chatId);
-            break;
-        case 'Rational en Lavado':
-            await askRational(chatId);
-            break;
-        case 'Desmonte de Sucursal':
-            await askDesmonte1(chatId);
-            break;
-        default:
-            await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
-            break;
+  async function handleTask(task, chatId) {
+    if (task in taskCompletion[chatId] && taskCompletion[chatId][task]) {
+        await bot.sendMessage(chatId, "Esta tarea ya se registró como completada.");
+        await showTaskMenu(chatId);
+        return;
     }
-    await showTaskMenu(chatId);
+    
+    switch (task) {
+        // Existing cases...
+        case '🧹 Limpieza profunda de salones':
+            await checkDeepCleaningRooms(chatId);
+            break;
+        case '🧹 Limpieza profunda de bodega':
+            await checkDeepCleaningStorage(chatId);
+            break;
+        case '🧹 Limpieza profunda de barra':
+            await checkDeepCleaningBar(chatId);
+            break;
+        case '🗑️ Sacar basura':
+            await checkTrashRemoval(chatId);
+            break;
+        case '🍹 Refill de barra':
+            await checkBarRefill(chatId);
+            break;
+        case '🧊 Refrigeradores Cerrados y Funcionando':
+            await checkRefrigeratorsClosedAndWorking(chatId);
+            break;
+        case '🧊 Hielera Funcionando':
+            await checkCoolerWorking(chatId);
+            break;
+        case '🌡️ Temperatura 3-4 Grados':
+            await checkRefrigeratorTemperature(chatId);
+            break;
+        case '🧼 Rational en Lavado':
+            await checkRationalCleaningMode(chatId);
+            break;
+        case '🔇 Reproductor Apagado':
+            await checkPlayerOff(chatId);
+            break;
+        case '🌿 Riego de Plantas':
+            await checkPlantsWatered(chatId);
+            break;
+        case '🚫 Toma de Gas Cerrada':
+            await checkGasValveClosed(chatId);
+            break;
+        case '🚰 Llaves de Agua Cerradas':
+            await checkWaterValvesClosed(chatId);
+            break;
+        case '💧 Fuga de Agua en Baños':
+            await checkWaterLeakInBathrooms(chatId);
+            break;
+        case '🔒 Alarma y Reja Aseguradas':
+            await checkAlarmAndGate(chatId);
+            break;
+        
+    }
+    
+    taskCompletion[chatId][task] = true; // Update task status
+    await showTaskMenu(chatId); // Show the menu again after a task is handled
 }
+
+
+async function registerEquipmentStatus(chatId, tipo, descripcion) {
+    const now = moment().tz('America/Mexico_City');
+    const fecha = now.format('YYYY-MM-DD');
+    const file_url = ''; // Dejar vacío ya que no se sube foto
+    const sucursal = sessions[chatId].sucursal;
+    await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion, sucursal);
+  }
+
+
+async function checkDeepCleaningRooms(chatId) {
+    await bot.sendMessage(chatId, "¿Limpieza profunda de salones realizada?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'limpieza profunda de salones';
+        const descripcion = msg.text === 'Sí ✅' ? 'Salones limpios profundamente' : 'Limpieza profunda de salones pendiente';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkDeepCleaningStorage(chatId) {
+    await bot.sendMessage(chatId, "¿Limpieza profunda de bodega realizada?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'limpieza profunda de bodega';
+        const descripcion = msg.text === 'Sí ✅' ? 'Bodega limpia profundamente' : 'Limpieza profunda de bodega pendiente';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkDeepCleaningBar(chatId) {
+    await bot.sendMessage(chatId, "¿Limpieza profunda de barra realizada?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'limpieza profunda de barra';
+        const descripcion = msg.text === 'Sí ✅' ? 'Barra limpia profundamente' : 'Limpieza profunda de barra pendiente';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkTrashRemoval(chatId) {
+    await bot.sendMessage(chatId, "¿Se sacó la basura?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'extracción de basura';
+        const descripcion = msg.text === 'Sí ✅' ? 'Basura sacada correctamente' : 'Basura pendiente de sacar';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkBarRefill(chatId) {
+    await bot.sendMessage(chatId, "¿Refill de barra realizado?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'refill de barra';
+        const descripcion = msg.text === 'Sí ✅' ? 'Refill de barra completado' : 'Refill de barra pendiente';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  async function checkRefrigeratorsClosedAndWorking(chatId) {
+    await bot.sendMessage(chatId, "¿Refrigeradores cerrados y funcionando?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'refrigeradores cerrados y funcionando';
+        const descripcion = msg.text === 'Sí ✅' ? 'Refrigeradores operativos y cerrados' : 'Refrigeradores abiertos o no funcionando';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkCoolerWorking(chatId) {
+    await bot.sendMessage(chatId, "¿Hielera funcionando correctamente?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'hielera funcionando';
+        const descripcion = msg.text === 'Sí ✅' ? 'Hielera operativa' : 'Hielera no funciona';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkRefrigeratorTemperature(chatId) {
+    await bot.sendMessage(chatId, "¿Temperatura correcta entre 3-4 grados en los refrigeradores?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'temperatura de refrigeradores';
+        const descripcion = msg.text === 'Sí ✅' ? 'Temperatura adecuada' : 'Temperatura inadecuada';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkRationalCleaningMode(chatId) {
+    await bot.sendMessage(chatId, "¿Rational en función de lavado?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'Rational en lavado';
+        const descripcion = msg.text === 'Sí ✅' ? 'Rational en modo de lavado' : 'Rational no está en lavado';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkPlayerOff(chatId) {
+    await bot.sendMessage(chatId, "¿Reproductor apagado?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'reproductor apagado';
+        const descripcion = msg.text === 'Sí ✅' ? 'Reproductor apagado' : 'Reproductor encendido';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkPlantsWatered(chatId) {
+    await bot.sendMessage(chatId, "¿Se regaron las plantas (cada 3 días)?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'riego de plantas';
+        const descripcion = msg.text === 'Sí ✅' ? 'Plantas regadas recientemente' : 'Plantas no regadas';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkGasValveClosed(chatId) {
+    await bot.sendMessage(chatId, "¿La toma de gas está cerrada?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'toma de gas cerrada';
+        const descripcion = msg.text === 'Sí ✅' ? 'Toma de gas cerrada correctamente' : 'Toma de gas abierta';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkWaterValvesClosed(chatId) {
+    await bot.sendMessage(chatId, "¿Las llaves de agua están cerradas?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'llaves de agua cerradas';
+        const descripcion = msg.text === 'Sí ✅' ? 'Llaves de agua cerradas' : 'Llaves de agua abiertas';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkWaterLeakInBathrooms(chatId) {
+    await bot.sendMessage(chatId, "¿Hay alguna fuga de agua en los baños?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'fuga de agua en baños';
+        const descripcion = msg.text === 'Sí ✅' ? 'Fuga de agua presente' : 'No hay fuga de agua';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+  
+  async function checkAlarmAndGate(chatId) {
+    await bot.sendMessage(chatId, "¿Alarma y reja aseguradas?", {
+      reply_markup: {
+        keyboard: [['Sí ✅', 'No ⛔']],
+        one_time_keyboard: true,
+        resize_keyboard: true
+      }
+    });
+  
+    return new Promise((resolve) => {
+      bot.once('message', async (msg) => {
+        const tipo = 'alarma y reja';
+        const descripcion = msg.text === 'Sí ✅' ? 'Alarma y reja aseguradas' : 'Alarma o reja no aseguradas';
+        await registerEquipmentStatus(chatId, tipo, descripcion);
+        await bot.sendMessage(chatId, `Estado de ${tipo} registrado correctamente.`);
+        resolve();
+      });
+    });
+  }
+
+
+
+
 
 
 

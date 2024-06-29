@@ -499,26 +499,28 @@ const taskCompletion = {};
 function initializeTaskCompletion(chatId) {
   taskCompletion[chatId] = {
       
-      'Congeladores': false,
-      'Refrigeradores': false,
-      'Limpieza Rational': false,
-      'Tazas Remojándose': false,
-      'Tarros Remojándose': false,
-      'Vaporización Tazas': false,
-      'Montaje Cocina': false,
-      'Montaje Barra': false,
-      'Montaje Vitrina': false,
-      'Montaje Panques': false,
-      'Acomodo Embotellados': false,
-      'Coldbrew Fridge': false,
-      'Salones Limpios': false,
-      'Servicios Mesa': false,
-      'Cuadros y Bocinas': false,
-      'Carrito Rojo': false,
-      'Limpieza Bodega': false,
-      'Limpieza Hojas Plantas': false
+      '🧊 Congeladores': false,
+      '🧊 Refrigeradores': false,
+      '🚪 Limpieza Rational': false,
+      '🍵 Tazas Remojándose': false,
+      '🥛 Tarros Remojándose': false,
+      '🔥 Vaporización Tazas': false,
+      '🍴 Montaje Cocina': false,
+      '🍸 Montaje Barra': false,
+      '🍰 Montaje Vitrina': false,
+      '🥞 Montaje Panques': false,
+      '🍾 Acomodo Embotellados': false,
+      '❄️ Coldbrew Fridge': false,
+      'Volumen de bocinas': false,
+      '🪑 Salones Limpios': false,
+      '🍽️ Servicios en Mesa': false,
+      '🖼️ Cuadros y Bocinas': false,
+      '🛒 Carrito Rojo': false,
+      '📦 Limpieza Bodega': false,
+      '🌿 Limpieza Hojas Plantas': false
   };
 }
+
 
 async function showTaskMenu(chatId) {
   initializeTaskCompletion(chatId); // Asegura que taskCompletion[chatId] esté inicializado
@@ -605,64 +607,65 @@ async function sendSheetLinkToTelegramGroup(chatId,groupId) {
 
 async function handleTask(task, chatId) {
   switch (task) {
-      case 'Congeladores':
+      case '🧊 Congeladores':
           await checkFreezers(chatId);
           break;
-      case 'Refrigeradores':
+      case '🧊 Refrigeradores':
           await checkRefrigerators(chatId);
           break;
-      case 'Limpieza Rational':
+      case '🚪 Limpieza Rational':
           await checkRationalDoorCleaning(chatId);
           break;
-      case 'Tazas Remojándose':
+      case '🍵 Tazas Remojándose':
           await checkSoakingCups(chatId);
           break;
-      case 'Tarros Remojándose':
+      case '🥛 Tarros Remojándose':
           await checkSoakingJars(chatId);
           break;
-      case 'Vaporización Tazas':
+      case '🔥 Vaporización Tazas':
           await checkCupSteaming(chatId);
           break;
-      case 'Montaje Cocina':
+      case '🍴 Montaje Cocina':
           await checkKitchenSetup(chatId);
           break;
-      case 'Montaje Barra':
+      case '🍸 Montaje Barra':
           await checkBarSetup(chatId);
           break;
-      case 'Montaje Vitrina':
+      case '🍰 Montaje Vitrina':
           await checkShowcaseSetup(chatId);
           break;
-      case 'Montaje Panques':
+      case '🥞 Montaje Panques':
           await checkPancakeSetup(chatId);
           break;
-      case 'Acomodo Embotellados':
+      case '🍾 Acomodo Embotellados':
           await checkBottledArrangement(chatId);
           break;
-      case 'Coldbrew Fridge':
+      case '❄️ Coldbrew Fridge':
           await checkColdbrewFridgeArrangement(chatId);
           break;
-      case 'Salones Limpios':
+      case '🪑 Salones Limpios':
           await checkCleanRooms(chatId);
           break;
-      case 'Servicios Mesa':
+      case '🍽️ Servicios en Mesa':
           await checkTableService(chatId);
           break;
-      case 'Cuadros y Bocinas':
+      case '🖼️ Cuadros y Bocinas':
           await checkFramesAndSpeakers(chatId);
           break;
-      case 'Carrito Rojo':
+      case '🛒 Carrito Rojo':
           await checkRedCartSetup(chatId);
           break;
-      case 'Limpieza Bodega':
+      case 'Volumen de bocinas':
+          await checkSpeakersVolumeAndPlaylist(chatId);
+          break;
+      case '📦 Limpieza Bodega':
           await checkStorageCleaning(chatId);
           break;
-      case 'Limpieza Hojas Plantas':
+      case '🌿 Limpieza Hojas Plantas':
           await checkPlantLeafCleaning(chatId);
           break;
       // Continuar añadiendo casos según sean necesarios
-      default:
-          await bot.sendMessage(chatId, "Por favor, seleccione una opción válida del menú.");
-          break;
+      
   }
   await showTaskMenu(chatId); // Volver a mostrar el menú
 }
@@ -1158,9 +1161,9 @@ function subirFoto(folder_id,fecha ,file_url, tipo, descripcion, sucursal) {
   });
 }
 
-function subirReporteDanio(folder_id, fecha, file_url, tipo, descripcion, sucursal) {
+function subirReporteDanio(folder_id, fecha, file_url, tipo, descripcion, sucursal, reporter) {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_reporte_danio', folder_id, fecha, file_url, tipo, descripcion, sucursal]);
+    const pythonProcess = spawn('python3', ['./src/archivo.py', 'subir_reporte_danio', folder_id, fecha, file_url, tipo, descripcion, sucursal, reporter]);
 
     let dataOutput = '';
     let errorOutput = '';
@@ -1186,7 +1189,7 @@ function subirReporteDanio(folder_id, fecha, file_url, tipo, descripcion, sucurs
 }
 
 
-async function handlePhotoUpload1(chatId, msg, tipo, descripcion = '') {
+async function handlePhotoUpload1(chatId, msg, tipo, descripcion = '', reporter) {
   if (msg.photo) {
     const chatId = msg.chat.id;
     const photo = msg.photo.pop();
@@ -1195,47 +1198,63 @@ async function handlePhotoUpload1(chatId, msg, tipo, descripcion = '') {
     const now = moment().tz('America/Mexico_City');
     const fecha = now.format('YYYY-MM-DD');
     const sucursal = sessions[chatId].sucursal;
-    await subirReporteDanio('1pS-L0xpDzIeuh9e0XliVhzjZUa7mYkvt', fecha, file_path, tipo, descripcion, sucursal);
+    await subirReporteDanio('1pS-L0xpDzIeuh9e0XliVhzjZUa7mYkvt', fecha, file_path, tipo, descripcion, sucursal, reporter);
     await bot.sendMessage(chatId, "Foto subida exitosamente a la hoja de cálculo.");
   } else {
     await bot.sendMessage(chatId, "Por favor envíe una foto.");
   }
 }
 
-async function manageEquipmentIssues2(chatId) {
-  // Solicitar al usuario que escriba el nombre del equipo dañado
-  await bot.sendMessage(chatId, "Por favor, escriba el nombre del equipo dañado.");
-
-  // Esperar a que el usuario proporcione el nombre del equipo
-  bot.once('message', async tipoMsg => {
-      if (tipoMsg.text) {
-          const tipo = tipoMsg.text; // Usar el texto proporcionado por el usuario como 'tipo'
-
-          // Solicitar la descripción del problema
-          await bot.sendMessage(chatId, "Describa ampliamente el problema del equipo.🔨");
-          bot.once('message', async descMsg => {
-              if (descMsg.text) {
-                  // Solicitar una foto del equipo dañado
-                  await bot.sendMessage(chatId, "Ahora, por favor suba una foto del equipo dañado.📸📸");
-                  bot.once('photo', async (msg) => {
-                      const descripcion = descMsg.text;
-                      await handlePhotoUpload1(chatId, msg, tipo, descripcion);
-                      await bot.sendMessage(chatId, "Reporte de equipo dañado completado. 😀");
-                      handleAdditionalOptions1(chatId);
-                  });
-              } else {
-                  await bot.sendMessage(chatId, "Por favor proporcione una descripción del problema.");
-              }
-          });
-      } else {
-          await bot.sendMessage(chatId, "Por favor, escriba un nombre válido para el equipo.");
+async function manageEquipmentIssues2(chatId, employees) {
+  // Solicitar al usuario que seleccione quién reporta el equipo dañado
+  await bot.sendMessage(chatId, "¿Quién reporta el equipo dañado? 👤", {
+      reply_markup: {
+          keyboard: employees.map(name => [{ text: name }]),
+          one_time_keyboard: true,
+          resize_keyboard: true
       }
   });
+
+  bot.once('message', async msg => {
+      const reporter = msg.text; // Capturar quién reporta el daño
+
+      // Solicitar al usuario que escriba el nombre del equipo dañado
+      await bot.sendMessage(chatId, "Por favor, escriba el nombre del equipo dañado.");
+
+      // Esperar a que el usuario proporcione el nombre del equipo
+      bot.once('message', async tipoMsg => {
+          if (tipoMsg.text) {
+              const tipo = tipoMsg.text; // Usar el texto proporcionado por el usuario como 'tipo'
+
+              // Solicitar la descripción del problema
+              await bot.sendMessage(chatId, "Describa ampliamente el problema del equipo.🔨");
+              bot.once('message', async descMsg => {
+                  if (descMsg.text) {
+                      // Solicitar una foto del equipo dañado
+                      await bot.sendMessage(chatId, "Ahora, por favor suba una foto del equipo dañado.📸📸");
+                      bot.once('photo', async (photoMsg) => {
+                          const descripcion = descMsg.text;
+                          await handlePhotoUpload1(chatId, photoMsg, tipo, descripcion, reporter);
+                          await bot.sendMessage(chatId, "Reporte de equipo dañado completado. 😀");
+                          handleAdditionalOptions1(chatId);
+                      });
+                  } else {
+                      await bot.sendMessage(chatId, "Por favor proporcione una descripción del problema.");
+                  }
+              });
+          } else {
+              await bot.sendMessage(chatId, "Por favor, escriba un nombre válido para el equipo.");
+          }
+      });
+  });
 }
+
 //no se reportaron equipos daniados!!!!!!!
 bot.onText(/\/reporte_danio/, (msg) => {
   const chatId = msg.chat.id;  // Extrae el chat_id del mensaje recibido
-  manageEquipmentIssues2(chatId);         // Llama a la función y pasa el chat_id
+  const employees = sessions[chatId].employees;
+
+  manageEquipmentIssues2(chatId, employees);         // Llama a la función y pasa el chat_id
 });
 
 bot.onText(/\/cambio_de_turno/, handleCambioCommand);

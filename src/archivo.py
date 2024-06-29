@@ -352,7 +352,7 @@ def obtener_o_crear_archivo_historial(folder_id):
         return file.get('id')
     return files[0]['id']
 
-def subir_reporte_danio(folder_id, fecha, file_url, tipo, descripcion, sucursal):
+def subir_reporte_danio(folder_id, fecha, file_url, tipo, descripcion, sucursal, reporter):
     """Sube la información de un equipo dañado al archivo 'Historial Equipos'."""
     historial_sheet_id = obtener_o_crear_archivo_historial(folder_id)
     hoja_id = obtener_o_crear_hoja(historial_sheet_id, "Reportes de Equipos Dañados")
@@ -360,7 +360,7 @@ def subir_reporte_danio(folder_id, fecha, file_url, tipo, descripcion, sucursal)
 
     # Insertar los datos con la fecha de reporte
     values = [
-        [sucursal, fecha, tipo, f'=IMAGE("{file_url}")', descripcion, 'Sin resolver']
+        [sucursal,reporter, fecha, tipo, f'=IMAGE("{file_url}")', descripcion, 'Sin resolver']
     ]
     range_name = f"Reportes de Equipos Dañados!A{next_row}:E{next_row}"
     body = {'values': values}
@@ -406,5 +406,5 @@ if __name__ == '__main__':
             tipo = sys.argv[5]
             descripcion = sys.argv[6]
             sucursal = sys.argv[7]
-            
-            subir_reporte_danio(folder_id, fecha,file_url, tipo, descripcion, sucursal)
+            reporter = sys.argv[8]
+            subir_reporte_danio(folder_id, fecha,file_url, tipo, descripcion, sucursal, reporter)
