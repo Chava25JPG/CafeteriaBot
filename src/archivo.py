@@ -335,7 +335,7 @@ def subir_foto_a_hoja(sheet_id, file_url, tipo, fecha, descripcion=''):
 
 def obtener_o_crear_archivo_historial(folder_id):
     """Busca o crea un archivo de historial de equipos dañados en la carpeta especificada."""
-    historial_file_name = "Historial Equipos"
+    historial_file_name = "REPORTE EQUIPOS FCO (telegram)"
     # Buscar el archivo en la carpeta especificada
     query = f"name='{historial_file_name}' and '{folder_id}' in parents and mimeType='application/vnd.google-apps.spreadsheet' and trashed = false"
     response = drive_service.files().list(q=query).execute()
@@ -400,7 +400,7 @@ if __name__ == '__main__':
             subir_foto_a_hoja(sheet_id, file_url, tipo, fecha, descripcion)
 
         elif command == 'subir_reporte_danio':
-            folder_id = sys.argv[2]
+            folder_id = '1-Kn6NkoLHYESXuKQV8mXbOmzCKAqV6cH'
             fecha = sys.argv[3]
             file_url = sys.argv[4]
             tipo = sys.argv[5]
