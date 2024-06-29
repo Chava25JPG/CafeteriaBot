@@ -23,7 +23,7 @@ def obtener_empleados_por_sucursal(sucursal, parent_folder_id):
 
     try:
         spreadsheet_id = files[0]['id']
-        range_name = 'A3:A'
+        range_name = 'A1:A'
         result = sheets_service.spreadsheets().values().get(spreadsheetId=spreadsheet_id, range=range_name).execute()
         empleados = [emp[0] for emp in result.get('values', []) if emp]
         return json.dumps({'status': 'success', 'data': empleados})
