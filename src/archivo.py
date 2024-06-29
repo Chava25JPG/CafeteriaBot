@@ -362,7 +362,7 @@ def subir_reporte_danio(folder_id, fecha, file_url, tipo, descripcion, sucursal,
     values = [
         [sucursal,reporter, fecha, tipo, f'=IMAGE("{file_url}")', descripcion, 'Sin resolver']
     ]
-    range_name = f"Reportes de Equipos Dañados!A{next_row}:E{next_row}"
+    range_name = f"Reportes de Equipos Dañados!A{next_row}:G{next_row}"
     body = {'values': values}
     sheets_service.spreadsheets().values().update(
         spreadsheetId=historial_sheet_id, range=range_name, valueInputOption='USER_ENTERED', body=body).execute()
