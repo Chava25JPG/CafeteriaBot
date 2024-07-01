@@ -388,7 +388,7 @@ if __name__ == '__main__':
             obtener_lista_empleados(folder_id, archivo_nombre)
 
         elif command == 'subir_foto':
-            folder_id = '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl'
+            folder_id = '1shYJJk3NQyauF8zp4HD7amhlZGmsC35H'
             fecha = sys.argv[3]
             file_url = sys.argv[4]
             tipo = sys.argv[5]

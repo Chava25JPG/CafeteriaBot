@@ -78,7 +78,7 @@ async function showTaskMenu(chatId, sucursal) {
 }
 
 async function sendSheetLinkToTelegramGroup(chatId, sucursal) {
-    folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
+    folderId= '1shYJJk3NQyauF8zp4HD7amhlZGmsC35H';
     
     const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId, sucursal]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
   
@@ -172,7 +172,7 @@ async function registerEquipmentStatus(chatId, tipo, descripcion) {
     const fecha = now.format('YYYY-MM-DD');
     const file_url = ''; // Dejar vacío ya que no se sube foto
     const sucursal = sessions[chatId].sucursal;
-    await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion, sucursal);
+    await subirFoto('1shYJJk3NQyauF8zp4HD7amhlZGmsC35H', fecha, file_url, tipo, descripcion, sucursal);
   }
 
 
@@ -507,7 +507,7 @@ async function registerClosure(chatId, tipo, descripcion) {
     const now = moment().tz('America/Mexico_City');
     const fecha = now.format('YYYY-MM-DD');
     const file_url = ''; // Dejar vacío ya que no se sube foto
-    await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion, chatId);
+    await subirFoto('1shYJJk3NQyauF8zp4HD7amhlZGmsC35H', fecha, file_url, tipo, descripcion, chatId);
 }
 
 async function askForRefillFood(chatId) {
@@ -962,7 +962,7 @@ async function handlePhotoUpload(chatId, msg, tipo, descripcion = '') {
         const file_path = await getFileLink(file_id);
         const now = moment().tz('America/Mexico_City');
         const fecha = now.format('YYYY-MM-DD');
-        await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_path, tipo, descripcion, chatId);
+        await subirFoto('1shYJJk3NQyauF8zp4HD7amhlZGmsC35H', fecha, file_path, tipo, descripcion, chatId);
         await bot.sendMessage(chatId, "Foto subida exitosamente a la hoja de cálculo.");
     } else {
         await bot.sendMessage(chatId, "Por favor envíe una foto.");

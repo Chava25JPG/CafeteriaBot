@@ -271,7 +271,7 @@ async function getFileLink(fileId) {
 
 function obtenerEmpleados() {
   return new Promise((resolve, reject) => {
-    const pythonProcess = spawn('python3', ['./src/archivo.py', 'listar', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia']);
+    const pythonProcess = spawn('python3', ['./src/archivo.py', 'listar', '1shYJJk3NQyauF8zp4HD7amhlZGmsC35H', 'Asistencia']);
     let dataString = '';
     let errorString = '';
 
@@ -307,7 +307,7 @@ function obtenerEmpleados() {
 
 function registrarAsistencia(empleado, fecha, hora, rol, sucursal, motivo) {
   return new Promise((resolve, reject) => {
-    const args = ['asistencia', '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', 'Asistencia', empleado, fecha, hora, rol, sucursal, motivo];
+    const args = ['asistencia', '1shYJJk3NQyauF8zp4HD7amhlZGmsC35H', 'Asistencia', empleado, fecha, hora, rol, sucursal, motivo];
     const pythonProcess = spawn('python3', ['./src/archivo.py', ...args]);
 
     let output = '';
@@ -579,7 +579,7 @@ async function sendSheetLinkToTelegramGroup(chatId,groupId) {
 
   const sucursal = sessions[chatId].sucursal;
   
-   folderId= '13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl';
+   folderId= '1shYJJk3NQyauF8zp4HD7amhlZGmsC35H';
    
    
    const pythonProcess = spawn('python3', ['./src/obtenerArchivo.py', folderId, sucursal]);  // Asumiendo que el script se llama obtenerArchivo.py y está en el directorio src/
@@ -1057,7 +1057,7 @@ async function registerEquipmentStatus(chatId, tipo, descripcion) {
   const fecha = now.format('YYYY-MM-DD');
   const file_url = ''; // Dejar vacío ya que no se sube foto
   const sucursal = sessions[chatId].sucursal;
-  await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_url, tipo, descripcion, sucursal);
+  await subirFoto('1shYJJk3NQyauF8zp4HD7amhlZGmsC35H', fecha, file_url, tipo, descripcion, sucursal);
 }
 
 
@@ -1127,7 +1127,7 @@ async function handlePhotoUpload(chatId, msg, tipo, descripcion = '') {
     const now = moment().tz('America/Mexico_City');
     const fecha = now.format('YYYY-MM-DD');
     const sucursal = sessions[chatId].sucursal;
-    await subirFoto('13Eir9iwT-z8vtQsxCzcONTlfLfMaBKvl', fecha, file_path, tipo, descripcion, sucursal);
+    await subirFoto('1shYJJk3NQyauF8zp4HD7amhlZGmsC35H', fecha, file_path, tipo, descripcion, sucursal);
     await bot.sendMessage(chatId, "Foto subida exitosamente a la hoja de cálculo.");
   } else {
     await bot.sendMessage(chatId, "Por favor envíe una foto.");
