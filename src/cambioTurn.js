@@ -26,6 +26,22 @@ async function getFileLink(fileId) {
       throw error; // Ensure the error is not unhandled
   }
 }
+
+
+async function handleCambioCommand(chatId, employees, sucursal) {
+  // Asumimos que esta función existe
+ if (!employees || employees.length === 0) {
+   await bot.sendMessage(chatId, "No se encontraron empleados.");
+   return;
+ }
+ sessions[chatId] = {
+   employees: employees,
+   sucursal: sucursal
+ };
+
+ // Iniciar el proceso de elegir empleado y rol
+ await chooseEmployee(chatId, employees);
+}
   
   function obtenerEmpleados() {
     return new Promise((resolve, reject) => {
@@ -94,20 +110,7 @@ async function getFileLink(fileId) {
     faltas_retardos: []
   };
   
-  async function handleCambioCommand(chatId, employees, sucursal) {
-     // Asumimos que esta función existe
-    if (!employees || employees.length === 0) {
-      await bot.sendMessage(chatId, "No se encontraron empleados.");
-      return;
-    }
-    sessions[chatId] = {
-      employees: employees,
-      sucursal: sucursal
-    };
   
-    // Iniciar el proceso de elegir empleado y rol
-    await chooseEmployee(chatId, employees);
-  }
   
   async function chooseEmployee(chatId, employees) {
     await bot.sendMessage(chatId, "¿Quién está en turno? 👤:", {
