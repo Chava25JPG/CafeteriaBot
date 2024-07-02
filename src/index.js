@@ -402,7 +402,7 @@ async function askForMore(chatId) {
             const sucursal = sessions[chatId].sucursal;
               handleAsistenciaCommand(chatId, employees, sucursal);
           } else if (msg.text === 'No ⛔' || msg.text === 'No') {
-              handleAdditionalOptions(chatId);
+              handleAdditionalOptions(chatId, employees, sucursal);
           } else {
               // Si la respuesta no es válida, pide de nuevo
               bot.sendMessage(chatId, "Por favor, seleccione una opción válida del teclado.", {
@@ -421,7 +421,7 @@ async function askForMore(chatId) {
 }
 
 
-async function handleAdditionalOptions(chatId) {
+async function handleAdditionalOptions(chatId, employees, sucursal) {
   await bot.sendMessage(chatId, "Seleccione una opción:", {
       reply_markup: {
           keyboard: [
@@ -438,7 +438,7 @@ async function handleAdditionalOptions(chatId) {
           switch (msg.text.toLowerCase()) {
               case 'marcar falta⛔':
               case 'marcar retardo⛔🕐':
-                  await handleFaltaRetardo(chatId, msg.text);
+                  await handleFaltaRetardo(chatId, msg.text, employees, sucursal);
                   break;
               case 'finalizar registro✨':
                   await showTaskMenu1(chatId)
@@ -1063,10 +1063,10 @@ async function registerEquipmentStatus(chatId, tipo, descripcion) {
 
 
 
-async function handleFaltaRetardo(chatId, tipo) {
+async function handleFaltaRetardo(chatId, tipo, employees, sucursal) {
   const now = moment().tz('America/Mexico_City');
   const fecha = now.format('YYYY-MM-DD');
-  const employees = await obtenerEmpleados();
+  
 
   await bot.sendMessage(chatId, `Seleccione el empleado para ${tipo.toLowerCase()}:`, {
     reply_markup: {
@@ -1085,7 +1085,7 @@ async function handleFaltaRetardo(chatId, tipo) {
       const rol = tipo === 'Marcar falta' ? 'Falta' : 'Retardo';
       await registrarAsistencia(empleado, fecha, hora, rol, motivo);
       await bot.sendMessage(chatId, `Se ha registrado un ${tipo.toLowerCase()} para ${empleado}.`);
-      handleAdditionalOptions(chatId);
+      handleAdditionalOptions(chatId, employees, sucursal);
     });
   });
 }

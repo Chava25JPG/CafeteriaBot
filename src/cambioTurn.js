@@ -166,7 +166,7 @@ async function handleCambioCommand(chatId, employees, sucursal) {
     });
   }
   
-  async function handleAdditionalOptions(chatId) {
+  async function handleAdditionalOptions(chatId, sucursal) {
     await bot.sendMessage(chatId, "Seleccione una opción:", {
       reply_markup: {
         keyboard: [
