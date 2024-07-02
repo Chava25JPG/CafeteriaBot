@@ -40,7 +40,7 @@ async function handleCambioCommand(chatId, employees, sucursal) {
  };
 
  // Iniciar el proceso de elegir empleado y rol
- await chooseEmployee(chatId, employees);
+ await chooseEmployee(chatId, employees, sucursal);
 }
   
   function obtenerEmpleados() {
@@ -75,9 +75,9 @@ async function handleCambioCommand(chatId, employees, sucursal) {
     });
   }
   
-  function registrarAsistencia(empleado, fecha, hora, rol, motivo) {
+  function registrarAsistencia(empleado, fecha, hora, rol,sucursal ,motivo) {
     return new Promise((resolve, reject) => {
-      const sucursal = sessions[chatId].sucursal;
+      
       
       const args = ['asistencia', '1shYJJk3NQyauF8zp4HD7amhlZGmsC35H', 'Asistencia', empleado, fecha, hora, rol,sucursal, motivo];
       const pythonProcess = spawn('python3', ['./src/archivo.py', ...args]);
@@ -112,7 +112,7 @@ async function handleCambioCommand(chatId, employees, sucursal) {
   
   
   
-  async function chooseEmployee(chatId, employees) {
+  async function chooseEmployee(chatId, employees, sucursal) {
     await bot.sendMessage(chatId, "¿Quién está en turno? 👤:", {
       reply_markup: {
         keyboard: employees.map(name => [{ text: name }]),
@@ -121,10 +121,10 @@ async function handleCambioCommand(chatId, employees, sucursal) {
       }
     });
   
-    bot.once('message', msg => handleRoleSelection(chatId, msg.text));
+    bot.once('message', msg => handleRoleSelection(chatId, msg.text, sucursal, employees));
   }
   
-  async function handleRoleSelection(chatId, empleado) {
+  async function handleRoleSelection(chatId, empleado, sucursal, employees) {
     const roles = ['servicio', 'barra', 'cocina', 'runner', 'lava loza'];
     await bot.sendMessage(chatId, "Seleccione el rol:", {
       reply_markup: {
@@ -141,14 +141,14 @@ async function handleCambioCommand(chatId, employees, sucursal) {
       const fecha = now.format('YYYY-MM-DD');
       const hora = now.format('HH:mm:ss');
 
-      const result = await registrarAsistencia(empleado, fecha, hora, rol);
+      const result = await registrarAsistencia(empleado, fecha, hora, rol, sucursal);
       asistencia.llegaron.push({ nombre: empleado, rol: rol });
       await bot.sendMessage(chatId, `Asistencia registrada para ${empleado} como ${rol}.`);
-      askForMore(chatId);
+      askForMore(chatId, sucursal, employees);
     });
   }
   
-  async function askForMore(chatId) {
+  async function askForMore(chatId, sucursal, employees) {
     await bot.sendMessage(chatId, "¿Desea registrar a otro empleado? 👥", {
       reply_markup: {
         keyboard: [['Sí ✅', 'No ⛔']],
@@ -159,9 +159,9 @@ async function handleCambioCommand(chatId, employees, sucursal) {
   
     bot.once('message', msg => {
       if (msg.text === 'Sí ✅') {
-        handleCambioCommand(chatId);
+        handleCambioCommand(chatId, employees, sucursal);
       } else {
-        handleAdditionalOptions(chatId);
+        handleAdditionalOptions(chatId, sucursal);
       }
     });
   }
@@ -180,7 +180,7 @@ async function handleCambioCommand(chatId, employees, sucursal) {
   
     bot.once('message', async msg => {
       if (msg.text === 'Marcar falta⛔' || msg.text === 'Marcar retardo⛔🕐') {
-        await handleFaltaRetardo(chatId, msg.text);
+        await handleFaltaRetardo(chatId, msg.text, sucursal);
       } else if (msg.text === 'Finalizar registro✨') {
         await showTaskMenu1(chatId);
         await showTaskMenu(chatId);
@@ -191,7 +191,7 @@ async function handleCambioCommand(chatId, employees, sucursal) {
   
 
 
-  async function handleFaltaRetardo(chatId, tipo) {
+  async function handleFaltaRetardo(chatId, tipo, sucursal) {
     const now = moment().tz('America/Mexico_City');
     const fecha = now.format('YYYY-MM-DD');
     const employees = await obtenerEmpleados();
@@ -211,7 +211,7 @@ async function handleCambioCommand(chatId, employees, sucursal) {
         const motivo = msg.text;
         const hora = now.format('HH:mm:ss');
         const rol = tipo === 'Marcar falta' ? 'Falta' : 'Retardo';
-        await registrarAsistencia(empleado, fecha, hora, rol, motivo);
+        await registrarAsistencia(empleado, fecha, hora, rol,sucursal ,motivo);
         await bot.sendMessage(chatId, `Se ha registrado un ${tipo.toLowerCase()} para ${empleado}.`);
         asistencia.faltas_retardos.push({ nombre: msg.text, tipo: falta_o_retardo });
        askForMore(chatId);
