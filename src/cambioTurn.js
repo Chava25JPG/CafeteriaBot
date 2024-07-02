@@ -101,7 +101,7 @@ async function getFileLink(fileId) {
       return;
     }
     sessions[chatId] = {
-      employees: result.data,
+      employees: employees,
       sucursal: sucursal
     };
   
