@@ -381,11 +381,11 @@ async function handleRoleSelection(chatId, empleado, sucursal, employees) {
     const result = await registrarAsistencia(empleado, fecha, hora, rol, sucursal);
     asistencia.llegaron.push({ nombre: empleado, rol: rol });
     await bot.sendMessage(chatId, `Asistencia registrada para ${empleado} como ${rol}.`);
-    askForMore(chatId, employees);
+    askForMore(chatId, employees, sucursal);
   });
 }
 
-async function askForMore(chatId, employees) {
+async function askForMore(chatId, employees, sucursal) {
   await bot.sendMessage(chatId, "¿Desea registrar a otro empleado? 👥", {
       reply_markup: {
           keyboard: [['Sí ✅', 'No ⛔']],
@@ -399,7 +399,7 @@ async function askForMore(chatId, employees) {
       bot.once('message', msg => {
           if (msg.text === 'Sí ✅' || msg.text === 'Si') {
             
-            const sucursal = sessions[chatId].sucursal;
+            //const sucursal = sessions[chatId].sucursal;
               handleAsistenciaCommand(chatId, employees, sucursal);
           } else if (msg.text === 'No ⛔' || msg.text === 'No') {
               handleAdditionalOptions(chatId, employees, sucursal);
