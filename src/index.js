@@ -164,7 +164,7 @@ bot.on('message', async (msg) => {
       handleAsistenciaCommand(chatId, employees, sucursal);
       break;
     case '🌕Turno Vespertino🌕':
-      handleAsistenciaCommand(chatId, employees, sucursal);
+      handleCambioCommand(chatId, employees, sucursal);
       break;
     case '🚪Cierre🚪':
       askDesmonte(chatId, sucursal);
@@ -1250,12 +1250,6 @@ async function manageEquipmentIssues2(chatId, employees) {
 }
 
 //no se reportaron equipos daniados!!!!!!!
-bot.onText(/\/reporte_danio/, (msg) => {
-  const chatId = msg.chat.id;  // Extrae el chat_id del mensaje recibido
-  const employees = sessions[chatId].employees;
-
-  manageEquipmentIssues2(chatId, employees);         // Llama a la función y pasa el chat_id
-});
 
 bot.onText(/\/cambio_de_turno/, handleCambioCommand);
 
